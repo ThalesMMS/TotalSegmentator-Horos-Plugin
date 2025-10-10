@@ -16,10 +16,10 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		CEC0F6E028BF4354003DD38F /* OsiriXTestPlugin.osirixplugin */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = OsiriXTestPlugin.osirixplugin; sourceTree = BUILT_PRODUCTS_DIR; };
+		CEC0F6E028BF4354003DD38F /* TotalSegmentatorHorosPlugin.osirixplugin */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TotalSegmentatorHorosPlugin.osirixplugin; sourceTree = BUILT_PRODUCTS_DIR; };
 		CEC0F6E928BF45CD003DD38F /* Horos.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = Horos.framework; sourceTree = "<group>"; };
 		CEC0F6EC28BF49EB003DD38F /* Settings.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = Settings.xib; sourceTree = "<group>"; };
-                CEC0F6F028BF8DF4003DD38F /* OsiriXTestPlugin-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "OsiriXTestPlugin-Bridging-Header.h"; sourceTree = "<group>"; };
+                CEC0F6F028BF8DF4003DD38F /* TotalSegmentatorHorosPlugin-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "TotalSegmentatorHorosPlugin-Bridging-Header.h"; sourceTree = "<group>"; };
                 CEC0F6F128BF8DF5003DD38F /* Plugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Plugin.swift; sourceTree = "<group>"; };
                 D2D8D2022AF5A00100AAA111 /* RunSegmentationWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunSegmentationWindowController.swift; sourceTree = "<group>"; };
                 D2D8D2042AF5A00100AAA111 /* RunSegmentationWindowController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = RunSegmentationWindowController.xib; sourceTree = "<group>"; };
@@ -48,14 +48,14 @@
                                 D2D8D2042AF5A00100AAA111 /* RunSegmentationWindowController.xib */,
                                 D2D8D2072AF5A9D200AAA111 /* TotalSegmentatorToolbar.png */,
                                 CEC0F6E128BF4354003DD38F /* Products */,
-                                CEC0F6F028BF8DF4003DD38F /* OsiriXTestPlugin-Bridging-Header.h */,
+                                CEC0F6F028BF8DF4003DD38F /* TotalSegmentatorHorosPlugin-Bridging-Header.h */,
                         );
 			sourceTree = "<group>";
 		};
 		CEC0F6E128BF4354003DD38F /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				CEC0F6E028BF4354003DD38F /* OsiriXTestPlugin.osirixplugin */,
+				CEC0F6E028BF4354003DD38F /* TotalSegmentatorHorosPlugin.osirixplugin */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -63,9 +63,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		CEC0F6DF28BF4354003DD38F /* OsiriXTestPlugin */ = {
+		CEC0F6DF28BF4354003DD38F /* TotalSegmentatorHorosPlugin */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = CEC0F6E428BF4354003DD38F /* Build configuration list for PBXNativeTarget "OsiriXTestPlugin" */;
+			buildConfigurationList = CEC0F6E428BF4354003DD38F /* Build configuration list for PBXNativeTarget "TotalSegmentatorHorosPlugin" */;
 			buildPhases = (
 				CEC0F6DC28BF4354003DD38F /* Sources */,
 				CEC0F6DD28BF4354003DD38F /* Frameworks */,
@@ -75,9 +75,9 @@
 			);
 			dependencies = (
 			);
-			name = OsiriXTestPlugin;
-			productName = OsiriXTestPlugin;
-			productReference = CEC0F6E028BF4354003DD38F /* OsiriXTestPlugin.osirixplugin */;
+			name = TotalSegmentatorHorosPlugin;
+			productName = TotalSegmentatorHorosPlugin;
+			productReference = CEC0F6E028BF4354003DD38F /* TotalSegmentatorHorosPlugin.osirixplugin */;
 			productType = "com.apple.product-type.bundle";
 		};
 /* End PBXNativeTarget section */
@@ -108,7 +108,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				CEC0F6DF28BF4354003DD38F /* OsiriXTestPlugin */,
+				CEC0F6DF28BF4354003DD38F /* TotalSegmentatorHorosPlugin */,
 			);
 		};
 /* End PBXProject section */
@@ -278,7 +278,7 @@
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SKIP_INSTALL = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_OBJC_BRIDGING_HEADER = "OsiriXTestPlugin-Bridging-Header.h";
+				SWIFT_OBJC_BRIDGING_HEADER = "TotalSegmentatorHorosPlugin-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				WRAPPER_EXTENSION = osirixplugin;
@@ -319,7 +319,7 @@
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SKIP_INSTALL = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_OBJC_BRIDGING_HEADER = "OsiriXTestPlugin-Bridging-Header.h";
+				SWIFT_OBJC_BRIDGING_HEADER = "TotalSegmentatorHorosPlugin-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				WRAPPER_EXTENSION = osirixplugin;
 			};
@@ -337,7 +337,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		CEC0F6E428BF4354003DD38F /* Build configuration list for PBXNativeTarget "OsiriXTestPlugin" */ = {
+		CEC0F6E428BF4354003DD38F /* Build configuration list for PBXNativeTarget "TotalSegmentatorHorosPlugin" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				CEC0F6E528BF4354003DD38F /* Debug */,
