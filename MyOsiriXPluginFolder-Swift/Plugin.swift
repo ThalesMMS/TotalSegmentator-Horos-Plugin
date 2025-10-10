@@ -12,6 +12,7 @@ class TotalSegmentatorHorosPlugin: PluginFilter {
         guard let menuName = menuName,
               let action = MenuAction(rawValue: menuName) else {
             NSLog("TotalSegmentatorHorosPlugin received unsupported menu action: %@", menuName ?? "nil")
+            presentAlert(title: "TotalSegmentator", message: "Unsupported action selected.")
             return 0
         }
 
@@ -56,8 +57,16 @@ class TotalSegmentatorHorosPlugin: PluginFilter {
     }
 
     private func startSegmentationFlow() {
-        guard let inputURL = promptForInputVolume() else {
-            NSLog("Segmentation cancelled: no input volume selected.")
+        guard let study = currentDicomStudy() else {
+            presentAlert(title: "TotalSegmentator", message: "No active study selected in the browser.")
+            return
+        }
+
+        let exportDirectory: URL
+        do {
+            exportDirectory = try exportCompatibleSeries(from: study)
+        } catch {
+            presentAlert(title: "TotalSegmentator", message: error.localizedDescription)
             return
         }
 
@@ -67,19 +76,8 @@ class TotalSegmentatorHorosPlugin: PluginFilter {
         }
 
         DispatchQueue.global(qos: .userInitiated).async {
-            self.runSegmentation(input: inputURL, output: outputURL)
+            self.runSegmentation(input: exportDirectory, output: outputURL)
         }
-    }
-
-    private func promptForInputVolume() -> URL? {
-        let panel = NSOpenPanel()
-        panel.canChooseFiles = true
-        panel.canChooseDirectories = false
-        panel.allowsMultipleSelection = false
-        panel.allowedFileTypes = ["nii", "nii.gz", "dcm", "dicom"]
-        panel.title = "Select input image for TotalSegmentator"
-
-        return panel.runModal() == .OK ? panel.url : nil
     }
 
     private func promptForOutputDirectory() -> URL? {
@@ -133,5 +131,132 @@ class TotalSegmentatorHorosPlugin: PluginFilter {
         } else {
             alert.runModal()
         }
+    }
+
+    private func currentDicomStudy() -> NSObject? {
+        guard let browser = BrowserController.currentBrowser() else {
+            NSLog("TotalSegmentatorHorosPlugin could not determine the current browser controller.")
+            return nil
+        }
+
+        return browser.value(forKey: "selectedStudy") as? NSObject
+    }
+
+    private func exportCompatibleSeries(from study: NSObject) throws -> URL {
+        enum ExportError: LocalizedError {
+            case noSeries
+            case noCompatibleSeries
+            case exportFailed(underlying: Error)
+
+            var errorDescription: String? {
+                switch self {
+                case .noSeries:
+                    return "The selected study does not contain any series to export."
+                case .noCompatibleSeries:
+                    return "The selected study does not contain CT or MR series compatible with TotalSegmentator."
+                case .exportFailed(let underlying):
+                    return "Failed to export DICOM files: \(underlying.localizedDescription)"
+                }
+            }
+        }
+
+        let supportedModalities: Set<String> = ["CT", "MR"]
+
+        let seriesCollection = study.value(forKey: "series")
+        let seriesArray: [NSObject]
+
+        if let array = seriesCollection as? [NSObject] {
+            seriesArray = array
+        } else if let orderedSet = seriesCollection as? NSOrderedSet, let array = orderedSet.array as? [NSObject] {
+            seriesArray = array
+        } else if let set = seriesCollection as? Set<NSObject> {
+            seriesArray = Array(set)
+        } else if let nsSet = seriesCollection as? NSSet, let array = nsSet.allObjects as? [NSObject] {
+            seriesArray = array
+        } else {
+            seriesArray = []
+        }
+
+        guard !seriesArray.isEmpty else {
+            throw ExportError.noSeries
+        }
+
+        let compatibleSeries = seriesArray.compactMap { series -> (series: NSObject, modality: String, paths: [String])? in
+            guard let modalityValue = series.value(forKey: "modality") as? String else {
+                return nil
+            }
+
+            let modality = modalityValue.uppercased()
+
+            guard supportedModalities.contains(modality),
+                  let paths = series.value(forKey: "paths") as? [String],
+                  !paths.isEmpty else {
+                return nil
+            }
+
+            return (series, modality, paths)
+        }
+
+        guard !compatibleSeries.isEmpty else {
+            throw ExportError.noCompatibleSeries
+        }
+
+        let exportDirectory = try makeExportDirectory()
+
+        var exportedFiles = 0
+
+        do {
+            for entry in compatibleSeries {
+                let seriesIdentifier = (entry.series.value(forKey: "seriesInstanceUID") as? String)
+                    .map { sanitizePathComponent($0) }
+                    ?? UUID().uuidString
+
+                let seriesDirectory = exportDirectory.appendingPathComponent(seriesIdentifier, isDirectory: true)
+                try FileManager.default.createDirectory(at: seriesDirectory, withIntermediateDirectories: true)
+
+                for path in entry.paths {
+                    let sourceURL = URL(fileURLWithPath: path)
+                    let destinationURL = seriesDirectory.appendingPathComponent(sourceURL.lastPathComponent)
+
+                    if FileManager.default.fileExists(atPath: destinationURL.path) {
+                        continue
+                    }
+
+                    try FileManager.default.copyItem(at: sourceURL, to: destinationURL)
+                    exportedFiles += 1
+                }
+            }
+        } catch {
+            throw ExportError.exportFailed(underlying: error)
+        }
+
+        if exportedFiles == 0 {
+            throw ExportError.noCompatibleSeries
+        }
+
+        return exportDirectory
+    }
+
+    private func makeExportDirectory() throws -> URL {
+        let baseDirectory = FileManager.default.temporaryDirectory.appendingPathComponent("TotalSegmentator", isDirectory: true)
+        try FileManager.default.createDirectory(at: baseDirectory, withIntermediateDirectories: true)
+
+        let exportDirectory = baseDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: exportDirectory, withIntermediateDirectories: true)
+
+        return exportDirectory
+    }
+
+    private func sanitizePathComponent(_ value: String) -> String {
+        let allowed = CharacterSet.alphanumerics.union(CharacterSet(charactersIn: "-_"))
+        let result = value.unicodeScalars.reduce(into: "") { partialResult, scalar in
+            if allowed.contains(scalar) {
+                partialResult.append(Character(scalar))
+            } else {
+                partialResult.append("_")
+            }
+        }
+
+        return result.isEmpty ? UUID().uuidString : result
     }
 }
