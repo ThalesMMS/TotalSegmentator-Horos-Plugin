@@ -11,6 +11,8 @@
                 <outlet property="devicePopupButton" destination="8fT-dX-eA2" id="JdI-rL-bMZ"/>
                 <outlet property="executablePathField" destination="AVX-iQ-7ju" id="T9U-7o-7rj"/>
                 <outlet property="fastModeCheckbox" destination="Ifv-9h-1EY" id="wDP-QH-jf5"/>
+                <outlet property="classSelectionButton" destination="q4x-4H-7gx" id="qfS-4s-4Fk"/>
+                <outlet property="classSelectionSummaryField" destination="JmA-7V-gwN" id="SO6-jL-Kh2"/>
                 <outlet property="settingsWindow" destination="1" id="ax2-hq-ygQ"/>
                 <outlet property="taskPopupButton" destination="M3d-RG-svS" id="z6H-3r-4Qx"/>
             </connections>
@@ -108,8 +110,34 @@
                             </menu>
                         </popUpButtonCell>
                     </popUpButton>
+                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="ZKq-2f-hDL">
+                        <rect key="frame" x="20" y="37" width="130" height="17"/>
+                        <textFieldCell key="cell" lineBreakMode="truncatingTail" title="Classes to import" id="mLJ-5b-Em4">
+                            <font key="font" metaFont="system"/>
+                            <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                            <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                        </textFieldCell>
+                    </textField>
+                    <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="JmA-7V-gwN">
+                        <rect key="frame" x="20" y="8" width="430" height="22"/>
+                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="left" placeholderString="All classes" title="All classes" drawsBackground="YES" editable="NO" selectable="NO" usesSingleLineMode="YES" bezeled="YES" id="rIJ-dD-Du7">
+                            <font key="font" metaFont="system"/>
+                            <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                            <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                        </textFieldCell>
+                    </textField>
+                    <button translatesAutoresizingMaskIntoConstraints="NO" id="q4x-4H-7gx">
+                        <rect key="frame" x="470" y="6" width="150" height="32"/>
+                        <buttonCell key="cell" type="push" title="Select Classes…" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="uw7-7k-RlM">
+                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                            <font key="font" metaFont="system"/>
+                        </buttonCell>
+                        <connections>
+                            <action selector="selectClasses:" target="-2" id="tFB-48-ZgZ"/>
+                        </connections>
+                    </button>
                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="nQl-8N-9dB">
-                        <rect key="frame" x="20" y="32" width="150" height="17"/>
+                        <rect key="frame" x="20" y="-4" width="150" height="17"/>
                         <textFieldCell key="cell" lineBreakMode="truncatingTail" title="Additional arguments" id="P5l-Wb-yvQ">
                             <font key="font" metaFont="system"/>
                             <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -145,7 +173,14 @@
                     <constraint firstItem="0jy-mL-T41" firstAttribute="leading" secondItem="2" secondAttribute="leading" constant="20" id="JHB-5g-uPo"/>
                     <constraint firstAttribute="trailing" secondItem="qfu-FH-JnY" secondAttribute="trailing" constant="105" id="K4y-uN-LfQ"/>
                     <constraint firstItem="qfu-FH-JnY" firstAttribute="top" secondItem="nQl-8N-9dB" secondAttribute="bottom" constant="8" id="Nc9-zo-VaY"/>
-                    <constraint firstItem="nQl-8N-9dB" firstAttribute="top" secondItem="8fT-dX-eA2" secondAttribute="bottom" constant="16" id="Tkq-eN-PLe"/>
+                    <constraint firstItem="JmA-7V-gwN" firstAttribute="leading" secondItem="2" secondAttribute="leading" constant="20" id="3yZ-0s-5gf"/>
+                    <constraint firstItem="JmA-7V-gwN" firstAttribute="top" secondItem="8fT-dX-eA2" secondAttribute="bottom" constant="16" id="5Qv-2L-JjN"/>
+                    <constraint firstItem="ZKq-2f-hDL" firstAttribute="leading" secondItem="2" secondAttribute="leading" constant="20" id="7VQ-rl-EL8"/>
+                    <constraint firstItem="ZKq-2f-hDL" firstAttribute="baseline" secondItem="JmA-7V-gwN" secondAttribute="baseline" id="8qk-g2-jgF"/>
+                    <constraint firstItem="q4x-4H-7gx" firstAttribute="leading" secondItem="JmA-7V-gwN" secondAttribute="trailing" constant="12" id="C3L-pZ-0aj"/>
+                    <constraint firstAttribute="trailing" secondItem="q4x-4H-7gx" secondAttribute="trailing" constant="20" id="LiR-e5-Wi1"/>
+                    <constraint firstItem="q4x-4H-7gx" firstAttribute="centerY" secondItem="JmA-7V-gwN" secondAttribute="centerY" id="S8k-d3-Mly"/>
+                    <constraint firstItem="nQl-8N-9dB" firstAttribute="top" secondItem="JmA-7V-gwN" secondAttribute="bottom" constant="16" id="Tkq-eN-PLe"/>
                     <constraint firstItem="0jy-mL-T41" firstAttribute="top" secondItem="Ifv-9h-1EY" secondAttribute="bottom" constant="16" id="ZQO-2v-9cc"/>
                     <constraint firstItem="6Qv-6F-bbf" firstAttribute="leading" secondItem="2" secondAttribute="leading" constant="20" id="blK-p3-FS9"/>
                     <constraint firstItem="6Qv-6F-bbf" firstAttribute="baseline" secondItem="M3d-RG-svS" secondAttribute="baseline" id="cZp-WJ-3vq"/>

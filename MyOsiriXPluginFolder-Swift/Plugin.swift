@@ -80,6 +80,23 @@ private enum SegmentationPostProcessingError: LocalizedError {
     }
 }
 
+private enum ClassSelectionError: LocalizedError {
+    case retrievalFailed(String)
+    case decodingFailed
+    case noClassesAvailable
+
+    var errorDescription: String? {
+        switch self {
+        case .retrievalFailed(let message):
+            return "Failed to load available classes: \(message)"
+        case .decodingFailed:
+            return "Received an unexpected response while loading available classes."
+        case .noClassesAvailable:
+            return "No selectable classes were returned for the current task."
+        }
+    }
+}
+
 private struct SegmentationAuditEntry: Codable {
     struct SeriesInfo: Codable {
         let seriesInstanceUID: String?
@@ -108,6 +125,8 @@ class TotalSegmentatorHorosPlugin: PluginFilter {
     @IBOutlet private weak var devicePopupButton: NSPopUpButton!
     @IBOutlet private weak var fastModeCheckbox: NSButton!
     @IBOutlet private weak var additionalArgumentsField: NSTextField!
+    @IBOutlet private weak var classSelectionSummaryField: NSTextField!
+    @IBOutlet private weak var classSelectionButton: NSButton!
 
     private enum MenuAction: String {
         case showSettings = "TotalSegmentator Settings"
@@ -117,6 +136,11 @@ class TotalSegmentatorHorosPlugin: PluginFilter {
     private let preferences = SegmentationPreferences()
     private var progressWindowController: SegmentationProgressWindowController?
     private let auditQueue = DispatchQueue(label: "org.totalsegmentator.horos.audit", qos: .utility)
+    private var classSelectionController: ClassSelectionWindowController?
+    private var availableClassOptionsCache: [String: [String]] = [:]
+    private var selectedClassNames: Set<String> = [] {
+        didSet { updateClassSelectionSummary() }
+    }
 
     private let taskOptions: [(title: String, value: String?)] = [
         (NSLocalizedString("Automatic (default)", comment: "Default task option"), nil),
@@ -213,6 +237,216 @@ class TotalSegmentatorHorosPlugin: PluginFilter {
         }
     }
 
+    @IBAction private func selectClasses(_ sender: Any) {
+        guard let settingsWindow = settingsWindow else { return }
+
+        let storedPreferences = self.preferences.effectivePreferences()
+        var effectivePreferences = storedPreferences
+
+        if let pathValue = executablePathField?.stringValue.trimmingCharacters(in: .whitespacesAndNewlines), !pathValue.isEmpty {
+            effectivePreferences.executablePath = pathValue
+        }
+
+        if let taskValue = taskPopupButton?.selectedItem?.representedObject as? String {
+            effectivePreferences.task = taskValue
+        }
+
+        let normalizedTask = effectivePreferences.task?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let taskKey = (normalizedTask?.isEmpty == false ? normalizedTask! : "__default__")
+
+        if let cached = availableClassOptionsCache[taskKey] {
+            presentClassSelectionWindow(with: cached, preselected: selectedClassNames)
+            return
+        }
+
+        classSelectionButton?.isEnabled = false
+
+        DispatchQueue.global(qos: .userInitiated).async {
+            guard let executableResolution = self.resolvePythonInterpreter(using: effectivePreferences) else {
+                DispatchQueue.main.async {
+                    self.classSelectionButton?.isEnabled = true
+                    self.presentAlert(
+                        title: "TotalSegmentator",
+                        message: "Unable to locate a Python interpreter. Please verify the executable path before selecting classes."
+                    )
+                }
+                return
+            }
+
+            do {
+                let options = try self.loadClassOptions(
+                    for: normalizedTask,
+                    executable: executableResolution
+                )
+                self.availableClassOptionsCache[taskKey] = options
+
+                DispatchQueue.main.async {
+                    self.classSelectionButton?.isEnabled = true
+                    self.presentClassSelectionWindow(with: options, preselected: self.selectedClassNames)
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    self.classSelectionButton?.isEnabled = true
+                    self.presentAlert(
+                        title: "TotalSegmentator",
+                        message: error.localizedDescription
+                    )
+                }
+            }
+        }
+    }
+
+    private func presentClassSelectionWindow(with options: [String], preselected: Set<String>) {
+        guard let settingsWindow = settingsWindow else { return }
+
+        let preselectedArray = Array(preselected.intersection(Set(options)))
+        let controller = ClassSelectionWindowController(
+            availableClasses: options,
+            preselected: preselectedArray
+        )
+
+        controller.onSelectionConfirmed = { [weak self] selection in
+            guard let self = self else { return }
+            self.selectedClassNames = Set(selection)
+            self.classSelectionController = nil
+            self.persistPreferencesFromUI()
+        }
+
+        controller.onSelectionCancelled = { [weak self] in
+            self?.classSelectionController = nil
+        }
+
+        classSelectionController = controller
+        settingsWindow.beginSheet(controller.window!, completionHandler: nil)
+    }
+
+
+    private func loadClassOptions(for task: String?, executable: ExecutableResolution) throws -> [String] {
+        let taskLiteral: String
+        if let rawTask = task?.trimmingCharacters(in: .whitespacesAndNewlines), !rawTask.isEmpty {
+            let escaped = rawTask
+                .replacingOccurrences(of: "\", with: "\\")
+                .replacingOccurrences(of: "\"", with: "\\\"")
+            taskLiteral = "\"" + escaped + "\""
+        } else {
+            taskLiteral = "None"
+        }
+
+        let scriptTemplate = """
+import json
+from totalsegmentator.map_to_binary import class_map
+
+task = <<TASK>>
+candidates = []
+
+if isinstance(task, str) and task.strip():
+    normalized = task.strip()
+    candidates.append(normalized)
+    if normalized.endswith("_fast"):
+        candidates.append(normalized[:-5])
+    if normalized.endswith("_mr"):
+        candidates.append(normalized[:-3])
+    if normalized.startswith("total"):
+        candidates.append("total")
+else:
+    candidates.extend(["total", "total_mr"])
+
+fallbacks = ["total", "total_mr"]
+for candidate in fallbacks:
+    if candidate not in candidates:
+        candidates.append(candidate)
+
+mapping = None
+for candidate in candidates:
+    if candidate in class_map:
+        mapping = class_map[candidate]
+        break
+
+if mapping is None:
+    print(json.dumps({"error": "unavailable"}))
+else:
+    names = sorted(set(str(value) for value in mapping.values()))
+    print(json.dumps({"names": names}))
+"""
+
+        let script = scriptTemplate.replacingOccurrences(of: "<<TASK>>", with: taskLiteral)
+
+        let process = Process()
+        process.executableURL = executable.executableURL
+        process.arguments = executable.leadingArguments + ["-c", script]
+        process.environment = executable.environment
+
+        let stdoutPipe = Pipe()
+        let stderrPipe = Pipe()
+        process.standardOutput = stdoutPipe
+        process.standardError = stderrPipe
+
+        do {
+            try process.run()
+        } catch {
+            throw ClassSelectionError.retrievalFailed(error.localizedDescription)
+        }
+
+        process.waitUntilExit()
+
+        let outputData = stdoutPipe.fileHandleForReading.readDataToEndOfFile()
+        let errorData = stderrPipe.fileHandleForReading.readDataToEndOfFile()
+
+        if process.terminationStatus != 0 {
+            let combinedData = outputData + errorData
+            let combinedMessage = String(data: combinedData, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            let fallbackMessage = "Python process exited with status \(process.terminationStatus)"
+            let message = combinedMessage.isEmpty ? fallbackMessage : combinedMessage
+            throw ClassSelectionError.retrievalFailed(message)
+        }
+
+        guard let jsonObject = try? JSONSerialization.jsonObject(with: outputData, options: []),
+              let dictionary = jsonObject as? [String: Any] else {
+            throw ClassSelectionError.decodingFailed
+        }
+
+        if let errorMessage = dictionary["error"] as? String {
+            throw ClassSelectionError.retrievalFailed(errorMessage)
+        }
+
+        guard let names = dictionary["names"] as? [String], !names.isEmpty else {
+            throw ClassSelectionError.noClassesAvailable
+        }
+
+        return names
+    }
+
+
+    private func updateClassSelectionSummary() {
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self,
+                  let summaryField = self.classSelectionSummaryField else { return }
+
+            let names = Array(self.selectedClassNames).sorted()
+            let summaryText: String
+            if names.isEmpty {
+                summaryText = NSLocalizedString("All classes", comment: "Summary shown when all classes are selected")
+                summaryField.toolTip = nil
+            } else if names.count <= 3 {
+                summaryText = names.joined(separator: ", ")
+                summaryField.toolTip = summaryText
+            } else {
+                summaryText = String(format: NSLocalizedString("%d classes selected", comment: "Summary with number of selected classes"), names.count)
+                summaryField.toolTip = names.joined(separator: ", ")
+            }
+
+            summaryField.stringValue = summaryText
+        }
+    }
+
+    private func supportsClassSelection(for task: String?) -> Bool {
+        guard let normalized = task?.trimmingCharacters(in: .whitespacesAndNewlines), !normalized.isEmpty else {
+            return true
+        }
+
+        return normalized.hasPrefix("total")
+    }
+
     override func initPlugin() {
         let bundle = Bundle(identifier: "com.totalsegmentator.horosplugin")
         bundle?.loadNibNamed("Settings", owner: self, topLevelObjects: nil)
@@ -280,8 +514,11 @@ class TotalSegmentatorHorosPlugin: PluginFilter {
         }
 
         let outputDetection = detectOutputType(from: additionalTokens)
-        let effectiveOutputType = outputDetection.type
-        let sanitizedAdditionalTokens = outputDetection.remainingTokens
+        let sanitizedAdditionalTokens = removeROISubsetTokens(from: outputDetection.remainingTokens)
+        let effectiveOutputType: SegmentationOutputType = .dicom
+        if outputDetection.type != .dicom {
+            logToConsole("Overriding requested output type '\(outputDetection.type.description)' with 'dicom' to ensure RT Struct overlays are generated.")
+        }
 
         var totalSegmentatorArguments: [String] = []
         if let task = currentPreferences.task, !task.isEmpty {
@@ -300,6 +537,16 @@ class TotalSegmentatorHorosPlugin: PluginFilter {
             totalSegmentatorArguments.append(contentsOf: sanitizedAdditionalTokens)
         }
 
+        let configuredClassSelection = currentPreferences.selectedClassNames
+        if !configuredClassSelection.isEmpty {
+            if supportsClassSelection(for: currentPreferences.task) {
+                totalSegmentatorArguments.append("--roi_subset")
+                totalSegmentatorArguments.append(contentsOf: configuredClassSelection)
+            } else {
+                logToConsole("Ignoring configured class selection because the current task does not support ROI subsets.")
+            }
+        }
+
         guard let primarySeries = exportResult.series.first else {
             DispatchQueue.main.async {
                 self.presentAlert(
@@ -310,9 +557,6 @@ class TotalSegmentatorHorosPlugin: PluginFilter {
             return
         }
 
-        let niftiURL = exportResult.directory.appendingPathComponent("converted_series.nii.gz", isDirectory: false)
-        let bridgeTemporaryDirectory = exportResult.directory.appendingPathComponent("conversion_tmp", isDirectory: true)
-
         let bridgeScriptURL: URL
         let configurationURL: URL
 
@@ -321,8 +565,6 @@ class TotalSegmentatorHorosPlugin: PluginFilter {
             configurationURL = try writeBridgeConfiguration(
                 to: exportResult.directory,
                 dicomDirectory: primarySeries.exportedDirectory,
-                niftiURL: niftiURL,
-                temporaryDirectory: bridgeTemporaryDirectory,
                 outputDirectory: output,
                 outputType: effectiveOutputType.description,
                 totalsegmentatorArguments: totalSegmentatorArguments
@@ -691,35 +933,21 @@ def main():
         config = json.load(handle)
 
     dicom_dir = Path(config["dicom_dir"]).expanduser()
-    nifti_path = Path(config["nifti_path"]).expanduser()
     output_dir = Path(config["output_dir"]).expanduser()
-    tmp_dir = Path(config["tmp_dir"]).expanduser()
+    output_type = config.get("output_type", "dicom")
 
     output_dir.mkdir(parents=True, exist_ok=True)
-    nifti_path.parent.mkdir(parents=True, exist_ok=True)
-    tmp_dir.mkdir(parents=True, exist_ok=True)
-
-    print(f"[TotalSegmentatorBridge] Converting '{dicom_dir}' to '{nifti_path}'", flush=True)
-    try:
-        from totalsegmentator.dicom_io import dcm_to_nifti
-        dcm_to_nifti(str(dicom_dir), str(nifti_path), tmp_dir=tmp_dir)
-    except Exception as exc:
-        print("[TotalSegmentatorBridge] DICOM to NIfTI conversion failed:", file=sys.stderr, flush=True)
-        traceback.print_exc()
-        return 1
-
-    print("[TotalSegmentatorBridge] Conversion finished. Launching TotalSegmentator...", flush=True)
 
     command = [
         sys.executable,
         "-m",
         "totalsegmentator.bin.TotalSegmentator",
         "-i",
-        str(nifti_path),
+        str(dicom_dir),
         "-o",
         str(output_dir),
         "--output_type",
-        config["output_type"],
+        output_type,
     ]
     command.extend(config.get("totalseg_args", []))
 
@@ -750,8 +978,6 @@ if __name__ == "__main__":
     private func writeBridgeConfiguration(
         to directory: URL,
         dicomDirectory: URL,
-        niftiURL: URL,
-        temporaryDirectory: URL,
         outputDirectory: URL,
         outputType: String,
         totalsegmentatorArguments: [String]
@@ -760,8 +986,6 @@ if __name__ == "__main__":
 
         let payload: [String: Any] = [
             "dicom_dir": dicomDirectory.path,
-            "nifti_path": niftiURL.path,
-            "tmp_dir": temporaryDirectory.path,
             "output_dir": outputDirectory.path,
             "output_type": outputType,
             "totalseg_args": totalsegmentatorArguments
@@ -896,6 +1120,13 @@ if __name__ == "__main__":
         }
 
         additionalArgumentsField?.placeholderString = "--roi_subset liver --statistics"
+        classSelectionSummaryField?.isEditable = false
+        classSelectionSummaryField?.isSelectable = false
+        classSelectionSummaryField?.usesSingleLineMode = true
+        classSelectionSummaryField?.lineBreakMode = .byTruncatingTail
+        classSelectionSummaryField?.placeholderString = NSLocalizedString("All classes", comment: "Placeholder for class selection summary")
+        classSelectionButton?.title = NSLocalizedString("Select Classes…", comment: "Button title for class selection")
+        updateClassSelectionSummary()
     }
 
     private func populateSettingsUI() {
@@ -903,6 +1134,7 @@ if __name__ == "__main__":
         executablePathField?.stringValue = current.executablePath ?? ""
         additionalArgumentsField?.stringValue = current.additionalArguments ?? ""
         fastModeCheckbox?.state = current.useFast ? .on : .off
+        selectedClassNames = Set(current.selectedClassNames)
 
         if let task = current.task,
            let menuItem = taskPopupButton?.menu?.items.first(where: { ($0.representedObject as? String) == task }) {
@@ -940,6 +1172,7 @@ if __name__ == "__main__":
 
         let additionalArgs = additionalArgumentsField?.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
         updated.additionalArguments = additionalArgs?.isEmpty == false ? additionalArgs : nil
+        updated.selectedClassNames = Array(selectedClassNames).sorted()
 
         preferences.store(updated)
     }
@@ -1164,6 +1397,33 @@ if __name__ == "__main__":
         return (detectedType, remainingTokens)
     }
 
+    private func removeROISubsetTokens(from tokens: [String]) -> [String] {
+        var filtered: [String] = []
+        var index = 0
+
+        while index < tokens.count {
+            let token = tokens[index]
+
+            if token == "--roi_subset" {
+                index += 1
+                while index < tokens.count, !tokens[index].hasPrefix("--") {
+                    index += 1
+                }
+                continue
+            }
+
+            if token.hasPrefix("--roi_subset=") {
+                index += 1
+                continue
+            }
+
+            filtered.append(token)
+            index += 1
+        }
+
+        return filtered
+    }
+
     private func integrateSegmentationOutput(
         at url: URL,
         outputType: SegmentationOutputType,
@@ -1340,6 +1600,8 @@ if __name__ == "__main__":
                 activeViewer.roiLoad(fromSeries: path)
             }
 
+            activeViewer.refresh()
+            activeViewer.window?.makeKeyAndOrderFront(nil)
             activeViewer.needsDisplayUpdate()
             progressController?.append("Applied \(importResult.rtStructPaths.count) RT Struct overlay(s) to the active viewer.")
         }
@@ -1575,6 +1837,7 @@ private extension TotalSegmentatorHorosPlugin {
             var useFast: Bool
             var device: String?
             var additionalArguments: String?
+            var selectedClassNames: [String]
         }
 
         private enum Keys {
@@ -1583,6 +1846,7 @@ private extension TotalSegmentatorHorosPlugin {
             static let fastMode = "TotalSegmentatorFastMode"
             static let device = "TotalSegmentatorDevice"
             static let additionalArguments = "TotalSegmentatorAdditionalArguments"
+            static let selectedClasses = "TotalSegmentatorSelectedClasses"
         }
 
         private let defaults = UserDefaults.standard
@@ -1593,7 +1857,8 @@ private extension TotalSegmentatorHorosPlugin {
                 task: defaults.string(forKey: Keys.task),
                 useFast: defaults.bool(forKey: Keys.fastMode),
                 device: defaults.string(forKey: Keys.device),
-                additionalArguments: defaults.string(forKey: Keys.additionalArguments)
+                additionalArguments: defaults.string(forKey: Keys.additionalArguments),
+                selectedClassNames: defaults.stringArray(forKey: Keys.selectedClasses) ?? []
             )
         }
 
@@ -1603,6 +1868,7 @@ private extension TotalSegmentatorHorosPlugin {
             defaults.setValue(state.useFast, forKey: Keys.fastMode)
             defaults.setValue(state.device, forKey: Keys.device)
             defaults.setValue(state.additionalArguments, forKey: Keys.additionalArguments)
+            defaults.setValue(state.selectedClassNames, forKey: Keys.selectedClasses)
         }
 
         func defaultExecutableURL() throws -> URL {
