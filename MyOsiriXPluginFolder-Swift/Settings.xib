@@ -5,10 +5,9 @@
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
-        <customObject id="-2" userLabel="File's Owner" customClass="YOURPLUGINCLASS">
+        <customObject id="-2" userLabel="File's Owner" customClass="TotalSegmentatorHorosPlugin">
             <connections>
-                <outlet property="myWindow" destination="1" id="ax2-hq-ygQ"/>
-                <outlet property="settings" destination="1" id="37"/>
+                <outlet property="settingsWindow" destination="1" id="ax2-hq-ygQ"/>
             </connections>
         </customObject>
         <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
@@ -32,7 +31,7 @@ DQ
 </string>
                         </buttonCell>
                         <connections>
-                            <action selector="okButton:" target="-2" id="cxE-YC-h1J"/>
+                            <action selector="closeSettings:" target="-2" id="cxE-YC-h1J"/>
                         </connections>
                     </button>
                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Lh0-WF-qET">

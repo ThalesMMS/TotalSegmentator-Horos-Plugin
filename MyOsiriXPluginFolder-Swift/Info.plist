@@ -2,11 +2,12 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>pluginType</key>
-	<string>Database</string>
-	<key>MenuTitles</key>
-	<array>
-		<string>Settings</string>
-	</array>
+        <key>pluginType</key>
+        <string>imageFilter</string>
+        <key>MenuTitles</key>
+        <array>
+                <string>Run TotalSegmentator</string>
+                <string>TotalSegmentator Settings</string>
+        </array>
 </dict>
 </plist>
