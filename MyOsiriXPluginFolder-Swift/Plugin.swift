@@ -1086,6 +1086,11 @@ After installing the package, re-run the segmentation.
         bundle?.loadNibNamed("Settings", owner: self, topLevelObjects: nil)
         settingsWindow?.delegate = self
         configureSettingsInterfaceIfNeeded()
+
+        let persistedSelection = Set(preferences.effectivePreferences().selectedClassNames)
+        selectedClassNames = persistedSelection
+        updateClassSelectionSummary()
+
         NSLog("TotalSegmentatorHorosPlugin loaded and ready.")
         DispatchQueue.global(qos: .utility).async { [weak self] in
             self?.performInitialSetupIfNeeded()
@@ -1113,7 +1118,7 @@ After installing the package, re-run the segmentation.
 
         var effectivePreferences = preferences.effectivePreferences()
         let runtimeSelection = Array(selectedClassNames).sorted()
-        if runtimeSelection != effectivePreferences.selectedClassNames {
+        if !runtimeSelection.isEmpty, runtimeSelection != effectivePreferences.selectedClassNames {
             effectivePreferences.selectedClassNames = runtimeSelection
         }
 
