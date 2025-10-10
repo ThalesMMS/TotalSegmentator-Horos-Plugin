@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="20037" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+    <dependencies>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="20037"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <objects>
+        <customObject id="-2" userLabel="File's Owner" customClass="YOURPLUGINCLASS">
+            <connections>
+                <outlet property="myWindow" destination="1" id="ax2-hq-ygQ"/>
+                <outlet property="settings" destination="1" id="37"/>
+            </connections>
+        </customObject>
+        <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
+        <customObject id="-3" userLabel="Application" customClass="NSObject"/>
+        <window title="Window" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" animationBehavior="default" id="1">
+            <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES"/>
+            <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
+            <rect key="contentRect" x="196" y="240" width="598" height="220"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="2880" height="1595"/>
+            <view key="contentView" id="2">
+                <rect key="frame" x="0.0" y="0.0" width="598" height="220"/>
+                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                <subviews>
+                    <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="43">
+                        <rect key="frame" x="13" y="13" width="53" height="32"/>
+                        <buttonCell key="cell" type="push" title="OK" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="44">
+                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                            <font key="font" metaFont="system"/>
+                            <string key="keyEquivalent" base64-UTF8="YES">
+DQ
+</string>
+                        </buttonCell>
+                        <connections>
+                            <action selector="okButton:" target="-2" id="cxE-YC-h1J"/>
+                        </connections>
+                    </button>
+                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Lh0-WF-qET">
+                        <rect key="frame" x="209" y="63" width="181" height="94"/>
+                        <textFieldCell key="cell" lineBreakMode="clipping" alignment="center" title="Hello" id="xsX-NR-oiP">
+                            <font key="font" metaFont="system" size="80"/>
+                            <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                            <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                        </textFieldCell>
+                    </textField>
+                </subviews>
+                <constraints>
+                    <constraint firstItem="43" firstAttribute="leading" secondItem="2" secondAttribute="leading" constant="20" symbolic="YES" id="6gd-dQ-1UV"/>
+                    <constraint firstItem="Lh0-WF-qET" firstAttribute="centerY" secondItem="2" secondAttribute="centerY" id="dZU-al-O5v"/>
+                    <constraint firstAttribute="bottom" secondItem="43" secondAttribute="bottom" constant="20" symbolic="YES" id="ehn-6w-WAL"/>
+                    <constraint firstItem="Lh0-WF-qET" firstAttribute="centerX" secondItem="2" secondAttribute="centerX" id="heN-rl-AAn"/>
+                </constraints>
+            </view>
+            <point key="canvasLocation" x="314" y="182"/>
+        </window>
+        <userDefaultsController representsSharedInstance="YES" id="11"/>
+    </objects>
+</document>
