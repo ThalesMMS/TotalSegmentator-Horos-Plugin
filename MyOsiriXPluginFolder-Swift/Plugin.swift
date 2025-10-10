@@ -37,7 +37,7 @@ private enum SegmentationOutputType: Equatable {
 }
 
 private struct ExportedSeries {
-    let managedObject: NSManagedObject
+    let series: DicomSeries
     let modality: String
     let exportedDirectory: URL
     let exportedFiles: [URL]
@@ -448,16 +448,21 @@ class TotalSegmentatorHorosPlugin: PluginFilter {
         }
     }
 
-    private func currentDicomStudy() -> NSObject? {
+    private func currentDicomStudy() -> DicomStudy? {
         guard let browser = BrowserController.currentBrowser() else {
             NSLog("TotalSegmentatorHorosPlugin could not determine the current browser controller.")
             return nil
         }
 
-        return browser.value(forKey: "selectedStudy") as? NSObject
+        guard let study = browser.selectedStudy() else {
+            NSLog("TotalSegmentatorPlugin did not find a selected study in the browser.")
+            return nil
+        }
+
+        return study
     }
 
-    private func exportCompatibleSeries(from study: NSObject) throws -> ExportResult {
+    private func exportCompatibleSeries(from study: DicomStudy) throws -> ExportResult {
         enum ExportError: LocalizedError {
             case noSeries
             case noCompatibleSeries
@@ -478,34 +483,23 @@ class TotalSegmentatorHorosPlugin: PluginFilter {
         let supportedModalities: Set<String> = ["CT", "MR"]
 
         let seriesCollection = study.value(forKey: "series")
-        let seriesArray: [NSObject]
-
-        if let array = seriesCollection as? [NSObject] {
-            seriesArray = array
-        } else if let orderedSet = seriesCollection as? NSOrderedSet, let array = orderedSet.array as? [NSObject] {
-            seriesArray = array
-        } else if let set = seriesCollection as? Set<NSObject> {
-            seriesArray = Array(set)
-        } else if let nsSet = seriesCollection as? NSSet, let array = nsSet.allObjects as? [NSObject] {
-            seriesArray = array
-        } else {
-            seriesArray = []
-        }
+        let seriesArray = normalizeSeriesCollection(seriesCollection)
 
         guard !seriesArray.isEmpty else {
             throw ExportError.noSeries
         }
 
-        let compatibleSeries = seriesArray.compactMap { series -> (series: NSObject, modality: String, paths: [String])? in
-            guard let modalityValue = series.value(forKey: "modality") as? String else {
+        let compatibleSeries = seriesArray.compactMap { series -> (series: DicomSeries, modality: String, paths: [String])? in
+            let rawModality = series.modality ?? (series.value(forKey: "modality") as? String)
+            let normalizedModality = rawModality?.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+
+            guard let modality = normalizedModality, supportedModalities.contains(modality) else {
                 return nil
             }
 
-            let modality = modalityValue.uppercased()
+            let paths = normalizePaths(from: series.paths())
 
-            guard supportedModalities.contains(modality),
-                  let paths = series.value(forKey: "paths") as? [String],
-                  !paths.isEmpty else {
+            guard !paths.isEmpty else {
                 return nil
             }
 
@@ -523,9 +517,9 @@ class TotalSegmentatorHorosPlugin: PluginFilter {
 
         do {
             for entry in compatibleSeries {
-                let seriesIdentifier = (entry.series.value(forKey: "seriesInstanceUID") as? String)
-                    .map { sanitizePathComponent($0) }
-                    ?? UUID().uuidString
+                let identifierSource = entry.series.seriesInstanceUID
+                    ?? (entry.series.value(forKey: "seriesInstanceUID") as? String)
+                let seriesIdentifier = identifierSource.map { sanitizePathComponent($0) } ?? UUID().uuidString
 
                 let seriesDirectory = exportDirectory.appendingPathComponent(seriesIdentifier, isDirectory: true)
                 try FileManager.default.createDirectory(at: seriesDirectory, withIntermediateDirectories: true)
@@ -545,40 +539,96 @@ class TotalSegmentatorHorosPlugin: PluginFilter {
                     copiedFiles.append(destinationURL)
                 }
 
-                if let managedSeries = entry.series as? NSManagedObject {
-                    let seriesUID = managedSeries.value(forKey: "seriesInstanceUID") as? String
-                    let studyUID: String? = {
-                        if let studyObject = managedSeries.value(forKey: "study") as? NSManagedObject,
-                           let uid = studyObject.value(forKey: "studyInstanceUID") as? String {
-                            return uid
-                        }
-                        return managedSeries.value(forKey: "studyInstanceUID") as? String
-                    }()
+                guard !copiedFiles.isEmpty else { continue }
 
-                    let seriesInfo = ExportedSeries(
-                        managedObject: managedSeries,
-                        modality: entry.modality,
-                        exportedDirectory: seriesDirectory,
-                        exportedFiles: copiedFiles,
-                        seriesInstanceUID: seriesUID,
-                        studyInstanceUID: studyUID
-                    )
-                    exportedSeries.append(seriesInfo)
-                }
+                let seriesInfo = ExportedSeries(
+                    series: entry.series,
+                    modality: entry.modality,
+                    exportedDirectory: seriesDirectory,
+                    exportedFiles: copiedFiles,
+                    seriesInstanceUID: entry.series.seriesInstanceUID
+                        ?? (entry.series.value(forKey: "seriesInstanceUID") as? String),
+                    studyInstanceUID: entry.series.study?.studyInstanceUID ?? study.studyInstanceUID
+                )
+                exportedSeries.append(seriesInfo)
             }
         } catch {
             throw ExportError.exportFailed(underlying: error)
         }
 
-        if exportedFiles == 0 {
+        guard exportedFiles > 0 else {
             throw ExportError.noCompatibleSeries
         }
 
-        if exportedSeries.isEmpty {
+        guard !exportedSeries.isEmpty else {
             throw ExportError.noCompatibleSeries
         }
 
         return ExportResult(directory: exportDirectory, series: exportedSeries)
+    }
+
+    private func normalizeSeriesCollection(_ value: Any?) -> [DicomSeries] {
+        if let series = value as? [DicomSeries] {
+            return series
+        }
+
+        if let series = value as? [Any] {
+            return series.compactMap { $0 as? DicomSeries }
+        }
+
+        if let orderedSet = value as? NSOrderedSet {
+            return orderedSet.array.compactMap { $0 as? DicomSeries }
+        }
+
+        if let nsSet = value as? NSSet {
+            return nsSet.allObjects.compactMap { $0 as? DicomSeries }
+        }
+
+        if let set = value as? Set<DicomSeries> {
+            return Array(set)
+        }
+
+        if let set = value as? Set<AnyHashable> {
+            return set.compactMap { $0.base as? DicomSeries }
+        }
+
+        if let single = value as? DicomSeries {
+            return [single]
+        }
+
+        return []
+    }
+
+    private func normalizePaths(from value: Any?) -> [String] {
+        if let paths = value as? [String] {
+            return paths
+        }
+
+        if let paths = value as? [Any] {
+            return paths.compactMap { $0 as? String }
+        }
+
+        if let orderedSet = value as? NSOrderedSet {
+            return orderedSet.array.compactMap { $0 as? String }
+        }
+
+        if let nsSet = value as? NSSet {
+            return nsSet.allObjects.compactMap { $0 as? String }
+        }
+
+        if let set = value as? Set<String> {
+            return Array(set)
+        }
+
+        if let set = value as? Set<AnyHashable> {
+            return set.compactMap { $0.base as? String }
+        }
+
+        if let single = value as? String {
+            return [single]
+        }
+
+        return []
     }
 
     private func makeExportDirectory() throws -> URL {
@@ -1006,8 +1056,8 @@ class TotalSegmentatorHorosPlugin: PluginFilter {
     }
 
     private func openViewer(for exportContext: ExportResult, browser: BrowserController) -> ViewerController? {
-        for series in exportContext.series {
-            if let viewer = browser.loadSeries(series.managedObject, viewer: nil, firstViewer: true, keyImagesOnly: false) {
+        for exportedSeries in exportContext.series {
+            if let viewer = browser.loadSeries(exportedSeries.series, viewer: nil, firstViewer: true, keyImagesOnly: false) {
                 return viewer
             }
         }
