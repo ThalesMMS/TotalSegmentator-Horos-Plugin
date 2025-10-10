@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="20037" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="NO">
+    <dependencies>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="20037"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <objects>
+        <customObject id="-2" userLabel="File's Owner" customClass="RunSegmentationWindowController">
+            <connections>
+                <outlet property="classSummaryField" destination="g28-vZ-pow" id="cZI-wC-wS1"/>
+                <outlet property="devicePopupButton" destination="jXf-e9-Q9h" id="eVO-Lj-nLY"/>
+                <outlet property="fastModeCheckbox" destination="aF4-RD-0iD" id="p1Z-FG-Lfu"/>
+                <outlet property="launchButton" destination="tL4-7f-8I6" id="xb0-RF-qdk"/>
+                <outlet property="licenseField" destination="S4L-MA-fjX" id="9it-0q-lgh"/>
+                <outlet property="outputPathField" destination="lQ7-4Z-HvA" id="yIV-df-kBf"/>
+                <outlet property="taskPopupButton" destination="jTp-n9-g5S" id="c3c-Bf-V9h"/>
+                <outlet property="window" destination="1" id="V77-qq-IGC"/>
+            </connections>
+        </customObject>
+        <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
+        <customObject id="-3" userLabel="Application" customClass="NSObject"/>
+        <window title="Run TotalSegmentator" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" animationBehavior="default" id="1">
+            <rect key="contentRect" x="0.0" y="0.0" width="480" height="300"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="1680" height="1027"/>
+            <view key="contentView" id="2">
+                <rect key="frame" x="0.0" y="0.0" width="480" height="300"/>
+                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                <subviews>
+                    <textField verticalHuggingPriority="251" id="uc3-lx-6X9">
+                        <rect key="frame" x="20" y="254" width="100" height="17"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <textFieldCell key="cell" controlSize="small" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Task:" id="bCw-MI-dQ6">
+                            <font key="font" metaFont="system" size="13"/>
+                        </textFieldCell>
+                    </textField>
+                    <popUpButton verticalHuggingPriority="251" id="jTp-n9-g5S">
+                        <rect key="frame" x="140" y="246" width="320" height="26"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
+                        <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" controlSize="small" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" pullsDown="NO" id="J9y-vG-Qjz">
+                            <font key="font" metaFont="system" size="13"/>
+                            <menu key="menu" id="2CN-cn-UQR">
+                                <items>
+                                    <menuItem title="Item 1" state="on" id="BIx-7A-x4f"/>
+                                </items>
+                            </menu>
+                        </popUpButtonCell>
+                    </popUpButton>
+                    <textField verticalHuggingPriority="251" id="W8b-vp-DdO">
+                        <rect key="frame" x="20" y="214" width="100" height="17"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <textFieldCell key="cell" controlSize="small" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Device:" id="rCg-z3-ixv">
+                            <font key="font" metaFont="system" size="13"/>
+                        </textFieldCell>
+                    </textField>
+                    <popUpButton verticalHuggingPriority="251" id="jXf-e9-Q9h">
+                        <rect key="frame" x="140" y="206" width="200" height="26"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" controlSize="small" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" pullsDown="NO" id="o9a-t0-J7g">
+                            <font key="font" metaFont="system" size="13"/>
+                            <menu key="menu" id="1fV-8M-0oc">
+                                <items>
+                                    <menuItem title="Item 1" state="on" id="svo-g7-o3s"/>
+                                </items>
+                            </menu>
+                        </popUpButtonCell>
+                    </popUpButton>
+                    <button id="aF4-RD-0iD">
+                        <rect key="frame" x="140" y="172" width="200" height="18"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <buttonCell key="cell" type="check" title="Fast mode" bezelStyle="regularSquare" imagePosition="left" controlSize="small" state="on" inset="2" id="kLz-Gv-rKK">
+                            <font key="font" metaFont="system" size="13"/>
+                        </buttonCell>
+                    </button>
+                    <textField verticalHuggingPriority="251" id="e2d-fu-6tx">
+                        <rect key="frame" x="20" y="140" width="100" height="17"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <textFieldCell key="cell" controlSize="small" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Classes:" id="VJd-YI-9j2">
+                            <font key="font" metaFont="system" size="13"/>
+                        </textFieldCell>
+                    </textField>
+                    <textField id="g28-vZ-pow">
+                        <rect key="frame" x="140" y="134" width="320" height="22"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
+                        <textFieldCell key="cell" controlSize="small" lineBreakMode="truncatingTail" sendsActionOnEndEditing="YES" placeholderString="All classes" id="Ylm-7L-DkG">
+                            <font key="font" metaFont="system" size="13"/>
+                        </textFieldCell>
+                    </textField>
+                    <textField verticalHuggingPriority="251" id="fpx-Q0-dVg">
+                        <rect key="frame" x="20" y="100" width="100" height="17"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <textFieldCell key="cell" controlSize="small" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="License:" id="nXa-xW-7u6">
+                            <font key="font" metaFont="system" size="13"/>
+                        </textFieldCell>
+                    </textField>
+                    <textField id="S4L-MA-fjX">
+                        <rect key="frame" x="140" y="94" width="320" height="22"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
+                        <textFieldCell key="cell" controlSize="small" sendsActionOnEndEditing="YES" placeholderString="Optional" id="oVe-3W-0ZI">
+                            <font key="font" metaFont="system" size="13"/>
+                            <color key="textColor" name="textColor" catalog="System"/>
+                            <color key="backgroundColor" name="textBackgroundColor" catalog="System"/>
+                        </textFieldCell>
+                    </textField>
+                    <textField verticalHuggingPriority="251" id="sY2-Iw-4VB">
+                        <rect key="frame" x="20" y="60" width="120" height="17"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <textFieldCell key="cell" controlSize="small" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Output folder:" id="r2D-8m-npl">
+                            <font key="font" metaFont="system" size="13"/>
+                        </textFieldCell>
+                    </textField>
+                    <textField id="lQ7-4Z-HvA">
+                        <rect key="frame" x="140" y="54" width="240" height="22"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
+                        <textFieldCell key="cell" controlSize="small" sendsActionOnEndEditing="YES" placeholderString="Choose a folder…" id="0PY-6F-6Zl">
+                            <font key="font" metaFont="system" size="13"/>
+                            <color key="textColor" name="textColor" catalog="System"/>
+                            <color key="backgroundColor" name="textBackgroundColor" catalog="System"/>
+                        </textFieldCell>
+                    </textField>
+                    <button verticalHuggingPriority="251" id="ybf-3k-3Ge">
+                        <rect key="frame" x="388" y="49" width="72" height="32"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
+                        <buttonCell key="cell" type="push" title="Choose…" bezelStyle="rounded" controlSize="small" font="system" id="Rk7-iO-u1c">
+                            <font key="font" metaFont="system" size="13"/>
+                        </buttonCell>
+                        <connections>
+                            <action selector="chooseOutputDirectory:" target="-2" id="d2X-kU-KZo"/>
+                        </connections>
+                    </button>
+                    <button verticalHuggingPriority="251" id="hWt-xB-9DN">
+                        <rect key="frame" x="292" y="10" width="90" height="32"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
+                        <buttonCell key="cell" type="push" title="Cancel" bezelStyle="rounded" controlSize="small" font="system" id="4aD-MB-bkW">
+                            <font key="font" metaFont="system" size="13"/>
+                        </buttonCell>
+                        <connections>
+                            <action selector="cancel:" target="-2" id="l4a-yN-u3p"/>
+                        </connections>
+                    </button>
+                    <button verticalHuggingPriority="251" id="tL4-7f-8I6">
+                        <rect key="frame" x="388" y="10" width="90" height="32"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
+                        <buttonCell key="cell" type="push" title="Launch" bezelStyle="rounded" controlSize="small" keyEquivalent="\r" font="system" id="jNI-jb-9Hh">
+                            <font key="font" metaFont="system" size="13"/>
+                        </buttonCell>
+                        <connections>
+                            <action selector="launch:" target="-2" id="owY-Qr-WTs"/>
+                        </connections>
+                    </button>
+                </subviews>
+            </view>
+        </window>
+    </objects>
+</document>
