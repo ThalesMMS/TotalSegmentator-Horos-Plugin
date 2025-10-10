@@ -2,6 +2,12 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+        <key>CFBundleIdentifier</key>
+        <string>com.totalsegmentator.horosplugin</string>
+        <key>CFBundleName</key>
+        <string>TotalSegmentatorPlugin</string>
+        <key>NSPrincipalClass</key>
+        <string>TotalSegmentatorPlugin</string>
         <key>pluginType</key>
         <string>imageFilter</string>
         <key>MenuTitles</key>

@@ -7,14 +7,14 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		CEC0F6EB28BF45CD003DD38F /* OsiriXAPI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CEC0F6E928BF45CD003DD38F /* OsiriXAPI.framework */; };
+		CEC0F6EB28BF45CD003DD38F /* Horos.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CEC0F6E928BF45CD003DD38F /* Horos.framework */; };
 		CEC0F6EE28BF49EB003DD38F /* Settings.xib in Resources */ = {isa = PBXBuildFile; fileRef = CEC0F6EC28BF49EB003DD38F /* Settings.xib */; };
 		CEC0F6F228BF8DF5003DD38F /* Plugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEC0F6F128BF8DF5003DD38F /* Plugin.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		CEC0F6E028BF4354003DD38F /* OsiriXTestPlugin.osirixplugin */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = OsiriXTestPlugin.osirixplugin; sourceTree = BUILT_PRODUCTS_DIR; };
-		CEC0F6E928BF45CD003DD38F /* OsiriXAPI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = OsiriXAPI.framework; sourceTree = "<group>"; };
+		CEC0F6E928BF45CD003DD38F /* Horos.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = Horos.framework; sourceTree = "<group>"; };
 		CEC0F6EC28BF49EB003DD38F /* Settings.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = Settings.xib; sourceTree = "<group>"; };
 		CEC0F6F028BF8DF4003DD38F /* OsiriXTestPlugin-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "OsiriXTestPlugin-Bridging-Header.h"; sourceTree = "<group>"; };
 		CEC0F6F128BF8DF5003DD38F /* Plugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Plugin.swift; sourceTree = "<group>"; };
@@ -25,7 +25,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				CEC0F6EB28BF45CD003DD38F /* OsiriXAPI.framework in Frameworks */,
+				CEC0F6EB28BF45CD003DD38F /* Horos.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -35,7 +35,7 @@
 		CEC0F6D728BF4354003DD38F = {
 			isa = PBXGroup;
 			children = (
-				CEC0F6E928BF45CD003DD38F /* OsiriXAPI.framework */,
+				CEC0F6E928BF45CD003DD38F /* Horos.framework */,
 				CEC0F6F128BF8DF5003DD38F /* Plugin.swift */,
 				CEC0F6EC28BF49EB003DD38F /* Settings.xib */,
 				CEC0F6E128BF4354003DD38F /* Products */,
@@ -249,7 +249,7 @@
 				INFOPLIST_FILE = Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				INFOPLIST_KEY_NSPrincipalClass = YOURPLUGINCLASS;
+				INFOPLIST_KEY_NSPrincipalClass = TotalSegmentatorPlugin;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Bundles";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -261,7 +261,7 @@
 					"-undefined",
 					dynamic_lookup,
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.rossetantoine.OsiriXTestPlugin;
+				PRODUCT_BUNDLE_IDENTIFIER = com.totalsegmentator.horosplugin;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SKIP_INSTALL = YES;
@@ -290,7 +290,7 @@
 				INFOPLIST_FILE = Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				INFOPLIST_KEY_NSPrincipalClass = YOURPLUGINCLASS;
+				INFOPLIST_KEY_NSPrincipalClass = TotalSegmentatorPlugin;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Bundles";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -302,7 +302,7 @@
 					"-undefined",
 					dynamic_lookup,
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.rossetantoine.OsiriXTestPlugin;
+				PRODUCT_BUNDLE_IDENTIFIER = com.totalsegmentator.horosplugin;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SKIP_INSTALL = YES;
