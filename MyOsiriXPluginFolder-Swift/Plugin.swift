@@ -156,6 +156,7 @@ class TotalSegmentatorHorosPlugin: PluginFilter {
     @IBOutlet private weak var devicePopupButton: NSPopUpButton!
     @IBOutlet private weak var fastModeCheckbox: NSButton!
     @IBOutlet private weak var additionalArgumentsField: NSTextField!
+    @IBOutlet private weak var licenseKeyField: NSTextField!
     @IBOutlet private weak var classSelectionSummaryField: NSTextField!
     @IBOutlet private weak var classSelectionButton: NSButton!
 
@@ -1900,6 +1901,7 @@ if __name__ == "__main__":
         let current = preferences.effectivePreferences()
         executablePathField?.stringValue = current.executablePath ?? ""
         additionalArgumentsField?.stringValue = current.additionalArguments ?? ""
+        licenseKeyField?.stringValue = current.licenseKey ?? ""
         fastModeCheckbox?.state = current.useFast ? .on : .off
         selectedClassNames = Set(current.selectedClassNames)
 
@@ -1920,6 +1922,7 @@ if __name__ == "__main__":
 
     private func persistPreferencesFromUI() {
         var updated = preferences.effectivePreferences()
+        let previousLicense = updated.licenseKey
         let executablePath = executablePathField?.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
         updated.executablePath = executablePath?.isEmpty == false ? executablePath : nil
 
@@ -1939,9 +1942,112 @@ if __name__ == "__main__":
 
         let additionalArgs = additionalArgumentsField?.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
         updated.additionalArguments = additionalArgs?.isEmpty == false ? additionalArgs : nil
+        let licenseKey = licenseKeyField?.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        updated.licenseKey = licenseKey?.isEmpty == false ? licenseKey : nil
         updated.selectedClassNames = Array(selectedClassNames).sorted()
 
         preferences.store(updated)
+
+        if updated.licenseKey != previousLicense {
+            synchronizeLicenseConfiguration(using: updated)
+        }
+    }
+
+    private func synchronizeLicenseConfiguration(using preferences: SegmentationPreferences.State) {
+        let trimmedLicense = preferences.licenseKey?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let normalizedLicense = trimmedLicense?.isEmpty == false ? trimmedLicense : nil
+
+        guard let resolution = resolvePythonInterpreter(using: preferences) else {
+            let message = NSLocalizedString(
+                "Unable to configure the TotalSegmentator license because the Python environment could not be resolved.",
+                comment: "License configuration failure message when interpreter is unavailable"
+            )
+            logToConsole(message)
+            presentAlert(title: "TotalSegmentator", message: message)
+            return
+        }
+
+        let script = """
+import sys
+from totalsegmentator.config import set_license_number
+license_value = sys.argv[1]
+skip_validation = sys.argv[2].lower() == "true"
+set_license_number(license_value, skip_validation=skip_validation)
+"""
+        let shouldSkipValidation = normalizedLicense == nil
+        let result = runPythonProcess(
+            using: resolution,
+            arguments: [
+                "-c",
+                script,
+                normalizedLicense ?? "",
+                shouldSkipValidation ? "true" : "false"
+            ],
+            progressController: nil
+        )
+
+        if let error = result.error {
+            let message = String(
+                format: NSLocalizedString(
+                    "Failed to configure the TotalSegmentator license: %@",
+                    comment: "License configuration failure message with error description"
+                ),
+                error.localizedDescription
+            )
+            logToConsole(message)
+            presentAlert(title: "TotalSegmentator", message: message)
+            return
+        }
+
+        if result.terminationStatus == 0 {
+            let message: String
+            if normalizedLicense == nil {
+                message = NSLocalizedString(
+                    "The TotalSegmentator license was cleared successfully.",
+                    comment: "Success message after clearing license"
+                )
+            } else {
+                message = NSLocalizedString(
+                    "The TotalSegmentator license was updated successfully.",
+                    comment: "Success message after updating license"
+                )
+            }
+
+            if let stdoutString = String(data: result.stdout, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines),
+               !stdoutString.isEmpty {
+                logToConsole(stdoutString)
+            }
+
+            logToConsole(message)
+            presentAlert(title: "TotalSegmentator", message: message)
+        } else {
+            let stderrString = String(data: result.stderr, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines)
+            let stdoutString = String(data: result.stdout, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines)
+
+            var messageComponents: [String] = []
+            if let stderrString, !stderrString.isEmpty {
+                messageComponents.append(stderrString)
+            }
+            if let stdoutString, !stdoutString.isEmpty {
+                messageComponents.append(stdoutString)
+            }
+
+            if messageComponents.isEmpty {
+                messageComponents.append(
+                    String(
+                        format: NSLocalizedString(
+                            "Failed to configure the TotalSegmentator license (exit code %d).",
+                            comment: "License configuration failure message with exit status"
+                        ),
+                        result.terminationStatus
+                    )
+                )
+            }
+
+            let message = messageComponents.joined(separator: "\n")
+            logToConsole(message)
+            presentAlert(title: "TotalSegmentator", message: message)
+        }
     }
 
     private func resolvePythonInterpreter(using preferences: SegmentationPreferences.State) -> ExecutableResolution? {
@@ -2726,6 +2832,7 @@ private extension TotalSegmentatorHorosPlugin {
             var useFast: Bool
             var device: String?
             var additionalArguments: String?
+            var licenseKey: String?
             var selectedClassNames: [String]
             var dcm2niixPath: String?
         }
@@ -2736,6 +2843,7 @@ private extension TotalSegmentatorHorosPlugin {
             static let fastMode = "TotalSegmentatorFastMode"
             static let device = "TotalSegmentatorDevice"
             static let additionalArguments = "TotalSegmentatorAdditionalArguments"
+            static let licenseKey = "TotalSegmentatorLicenseKey"
             static let selectedClasses = "TotalSegmentatorSelectedClasses"
             static let dcm2niixPath = "TotalSegmentatorDcm2NiixPath"
         }
@@ -2749,6 +2857,7 @@ private extension TotalSegmentatorHorosPlugin {
                 useFast: defaults.bool(forKey: Keys.fastMode),
                 device: defaults.string(forKey: Keys.device),
                 additionalArguments: defaults.string(forKey: Keys.additionalArguments),
+                licenseKey: defaults.string(forKey: Keys.licenseKey),
                 selectedClassNames: defaults.stringArray(forKey: Keys.selectedClasses) ?? [],
                 dcm2niixPath: defaults.string(forKey: Keys.dcm2niixPath)
             )
@@ -2760,6 +2869,7 @@ private extension TotalSegmentatorHorosPlugin {
             defaults.setValue(state.useFast, forKey: Keys.fastMode)
             defaults.setValue(state.device, forKey: Keys.device)
             defaults.setValue(state.additionalArguments, forKey: Keys.additionalArguments)
+            defaults.setValue(state.licenseKey, forKey: Keys.licenseKey)
             defaults.setValue(state.selectedClassNames, forKey: Keys.selectedClasses)
             defaults.setValue(state.dcm2niixPath, forKey: Keys.dcm2niixPath)
         }

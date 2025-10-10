@@ -8,6 +8,7 @@
         <customObject id="-2" userLabel="File's Owner" customClass="TotalSegmentatorHorosPlugin">
             <connections>
                 <outlet property="additionalArgumentsField" destination="qfu-FH-JnY" id="WrZ-9K-U8P"/>
+                <outlet property="licenseKeyField" destination="IaC-xG-XYl" id="W8P-12-L9K"/>
                 <outlet property="devicePopupButton" destination="8fT-dX-eA2" id="JdI-rL-bMZ"/>
                 <outlet property="executablePathField" destination="AVX-iQ-7ju" id="T9U-7o-7rj"/>
                 <outlet property="fastModeCheckbox" destination="Ifv-9h-1EY" id="wDP-QH-jf5"/>
@@ -65,6 +66,22 @@
                             <action selector="browseForExecutable:" target="-2" id="lNF-v9-tTy"/>
                         </connections>
                     </button>
+                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="v7C-dy-epl">
+                        <rect key="frame" x="20" y="155" width="220" height="17"/>
+                        <textFieldCell key="cell" lineBreakMode="truncatingTail" title="Total Segmentator License" id="X4K-tb-8yP">
+                            <font key="font" metaFont="system"/>
+                            <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                            <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                        </textFieldCell>
+                    </textField>
+                    <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="IaC-xG-XYl">
+                        <rect key="frame" x="20" y="126" width="600" height="22"/>
+                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" placeholderString="aca_12345678910" id="lwi-HU-OYp">
+                            <font key="font" metaFont="system"/>
+                            <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                            <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                        </textFieldCell>
+                    </textField>
                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="6Qv-6F-bbf">
                         <rect key="frame" x="20" y="155" width="70" height="17"/>
                         <textFieldCell key="cell" lineBreakMode="truncatingTail" title="Task" id="15s-CK-JM1">
@@ -162,7 +179,12 @@
                     <constraint firstItem="Z4y-SO-h4R" firstAttribute="leading" secondItem="AVX-iQ-7ju" secondAttribute="trailing" constant="16" id="6e4-5u-Puy"/>
                     <constraint firstItem="Z4y-SO-h4R" firstAttribute="centerY" secondItem="AVX-iQ-7ju" secondAttribute="centerY" id="AEH-VP-wno"/>
                     <constraint firstAttribute="trailing" secondItem="Z4y-SO-h4R" secondAttribute="trailing" constant="20" id="8F5-4E-9dO"/>
-                    <constraint firstItem="M3d-RG-svS" firstAttribute="top" secondItem="AVX-iQ-7ju" secondAttribute="bottom" constant="20" id="8kv-h1-7V2"/>
+                    <constraint firstItem="v7C-dy-epl" firstAttribute="leading" secondItem="2" secondAttribute="leading" constant="20" id="8XF-iq-j9T"/>
+                    <constraint firstItem="v7C-dy-epl" firstAttribute="top" secondItem="AVX-iQ-7ju" secondAttribute="bottom" constant="20" id="8np-Xq-3pR"/>
+                    <constraint firstItem="IaC-xG-XYl" firstAttribute="leading" secondItem="2" secondAttribute="leading" constant="20" id="A8D-2G-XhQ"/>
+                    <constraint firstItem="IaC-xG-XYl" firstAttribute="top" secondItem="v7C-dy-epl" secondAttribute="bottom" constant="8" id="BYe-Hj-e5z"/>
+                    <constraint firstAttribute="trailing" secondItem="IaC-xG-XYl" secondAttribute="trailing" constant="20" id="FfQ-Kg-UTf"/>
+                    <constraint firstItem="M3d-RG-svS" firstAttribute="top" secondItem="IaC-xG-XYl" secondAttribute="bottom" constant="20" id="8kv-h1-7V2"/>
                     <constraint firstItem="M3d-RG-svS" firstAttribute="leading" secondItem="2" secondAttribute="leading" constant="20" id="9fF-6u-cfH"/>
                     <constraint firstItem="Ifv-9h-1EY" firstAttribute="leading" secondItem="M3d-RG-svS" secondAttribute="trailing" constant="24" id="ARL-ux-UzB"/>
                     <constraint firstItem="Ifv-9h-1EY" firstAttribute="centerY" secondItem="M3d-RG-svS" secondAttribute="centerY" id="Aro-1c-4VC"/>
