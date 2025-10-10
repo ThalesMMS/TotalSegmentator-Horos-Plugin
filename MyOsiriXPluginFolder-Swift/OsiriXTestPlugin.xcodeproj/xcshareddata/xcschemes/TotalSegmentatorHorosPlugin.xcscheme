@@ -15,8 +15,8 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "CEC0F6DF28BF4354003DD38F"
-               BuildableName = "OsiriXTestPlugin.osirixplugin"
-               BlueprintName = "OsiriXTestPlugin"
+               BuildableName = "TotalSegmentatorHorosPlugin.osirixplugin"
+               BlueprintName = "TotalSegmentatorHorosPlugin"
                ReferencedContainer = "container:OsiriXTestPlugin.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -42,8 +42,8 @@
       allowLocationSimulation = "YES">
       <PathRunnable
          runnableDebuggingMode = "0"
-         BundleIdentifier = "com.rossetantoine.osirix"
-         FilePath = "/Applications/OsiriX MD.app">
+         BundleIdentifier = "com.horosproject.horos"
+         FilePath = "/Applications/Horos.app">
       </PathRunnable>
    </LaunchAction>
    <ProfileAction
@@ -56,8 +56,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "CEC0F6DF28BF4354003DD38F"
-            BuildableName = "OsiriXTestPlugin.osirixplugin"
-            BlueprintName = "OsiriXTestPlugin"
+            BuildableName = "TotalSegmentatorHorosPlugin.osirixplugin"
+            BlueprintName = "TotalSegmentatorHorosPlugin"
             ReferencedContainer = "container:OsiriXTestPlugin.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
