@@ -200,7 +200,7 @@ class TotalSegmentatorHorosPlugin: PluginFilter {
         panel.canChooseFiles = true
         panel.canChooseDirectories = false
         panel.allowsMultipleSelection = false
-        panel.title = "Select TotalSegmentator executable"
+        panel.title = "Select Python interpreter or TotalSegmentator executable"
         panel.prompt = "Choose"
 
         if let existingPath = executablePathField?.stringValue,
@@ -222,14 +222,14 @@ class TotalSegmentatorHorosPlugin: PluginFilter {
     }
 
     private func startSegmentationFlow() {
-        guard let study = currentDicomStudy() else {
-            presentAlert(title: "TotalSegmentator", message: "No active study selected in the browser.")
+        guard let viewer = ViewerController.frontMostDisplayed2DViewer() else {
+            presentAlert(title: "TotalSegmentator", message: "No active viewer is available.")
             return
         }
 
         let exportResult: ExportResult
         do {
-            exportResult = try exportCompatibleSeries(from: study)
+            exportResult = try exportActiveSeries(from: viewer)
         } catch {
             presentAlert(title: "TotalSegmentator", message: error.localizedDescription)
             return
@@ -257,13 +257,15 @@ class TotalSegmentatorHorosPlugin: PluginFilter {
     }
 
     private func runSegmentation(exportResult: ExportResult, output: URL) {
+        defer { cleanupTemporaryDirectory(exportResult.directory) }
+
         let currentPreferences = preferences.effectivePreferences()
 
-        guard let executableResolution = resolveExecutable(using: currentPreferences) else {
+        guard let executableResolution = resolvePythonInterpreter(using: currentPreferences) else {
             DispatchQueue.main.async {
                 self.presentAlert(
                     title: "TotalSegmentator",
-                    message: "Unable to locate the TotalSegmentator executable. Please verify the path in the plugin settings."
+                    message: "Unable to locate a Python interpreter with TotalSegmentator installed. Please verify the path in the plugin settings."
                 )
             }
             return
@@ -281,29 +283,60 @@ class TotalSegmentatorHorosPlugin: PluginFilter {
         let effectiveOutputType = outputDetection.type
         let sanitizedAdditionalTokens = outputDetection.remainingTokens
 
-        var arguments: [String] = []
-        arguments.append(contentsOf: executableResolution.leadingArguments)
-        arguments.append(contentsOf: ["-i", exportResult.directory.path, "-o", output.path, "--output_type", effectiveOutputType.description])
-
+        var totalSegmentatorArguments: [String] = []
         if let task = currentPreferences.task, !task.isEmpty {
-            arguments.append(contentsOf: ["--task", task])
+            totalSegmentatorArguments.append(contentsOf: ["--task", task])
         }
 
         if currentPreferences.useFast {
-            arguments.append("--fast")
+            totalSegmentatorArguments.append("--fast")
         }
 
         if let device = currentPreferences.device, !device.isEmpty {
-            arguments.append(contentsOf: ["--device", device])
+            totalSegmentatorArguments.append(contentsOf: ["--device", device])
         }
 
         if !sanitizedAdditionalTokens.isEmpty {
-            arguments.append(contentsOf: sanitizedAdditionalTokens)
+            totalSegmentatorArguments.append(contentsOf: sanitizedAdditionalTokens)
+        }
+
+        guard let primarySeries = exportResult.series.first else {
+            DispatchQueue.main.async {
+                self.presentAlert(
+                    title: "TotalSegmentator",
+                    message: "No exported DICOM series was found for segmentation."
+                )
+            }
+            return
+        }
+
+        let niftiURL = exportResult.directory.appendingPathComponent("converted_series.nii.gz", isDirectory: false)
+        let bridgeTemporaryDirectory = exportResult.directory.appendingPathComponent("conversion_tmp", isDirectory: true)
+
+        let bridgeScriptURL: URL
+        let configurationURL: URL
+
+        do {
+            bridgeScriptURL = try prepareBridgeScript(at: exportResult.directory)
+            configurationURL = try writeBridgeConfiguration(
+                to: exportResult.directory,
+                dicomDirectory: primarySeries.exportedDirectory,
+                niftiURL: niftiURL,
+                temporaryDirectory: bridgeTemporaryDirectory,
+                outputDirectory: output,
+                outputType: effectiveOutputType.description,
+                totalsegmentatorArguments: totalSegmentatorArguments
+            )
+        } catch {
+            DispatchQueue.main.async {
+                self.presentAlert(title: "TotalSegmentator", message: error.localizedDescription)
+            }
+            return
         }
 
         let process = Process()
         process.executableURL = executableResolution.executableURL
-        process.arguments = arguments
+        process.arguments = executableResolution.leadingArguments + [bridgeScriptURL.path, "--config", configurationURL.path]
 
         var environment = ProcessInfo.processInfo.environment
         environment["PYTHONUNBUFFERED"] = "1"
@@ -448,18 +481,89 @@ class TotalSegmentatorHorosPlugin: PluginFilter {
         }
     }
 
-    private func currentDicomStudy() -> DicomStudy? {
-        guard let browser = BrowserController.currentBrowser() else {
-            NSLog("TotalSegmentatorHorosPlugin could not determine the current browser controller.")
-            return nil
+    private func exportActiveSeries(from viewer: ViewerController) throws -> ExportResult {
+        enum ActiveSeriesExportError: LocalizedError {
+            case missingSeries
+            case unsupportedModality(String?)
+            case missingSlices
+            case exportFailed(underlying: Error)
+
+            var errorDescription: String? {
+                switch self {
+                case .missingSeries:
+                    return "The active viewer does not reference a DICOM series."
+                case .unsupportedModality(let value):
+                    if let value = value, !value.isEmpty {
+                        return "The active series modality '\(value)' is not supported by TotalSegmentator."
+                    }
+                    return "The active series modality is not supported by TotalSegmentator."
+                case .missingSlices:
+                    return "Unable to locate the DICOM slices for the active series."
+                case .exportFailed(let underlying):
+                    return "Failed to export the active DICOM series: \(underlying.localizedDescription)"
+                }
+            }
         }
 
-        guard let study = browser.selectedStudy() else {
-            NSLog("TotalSegmentatorPlugin did not find a selected study in the browser.")
-            return nil
+        let supportedModalities: Set<String> = ["CT", "MR"]
+
+        guard let series = viewer.seriesObj else {
+            throw ActiveSeriesExportError.missingSeries
         }
 
-        return study
+        let rawModality = series.modality ?? (series.value(forKey: "modality") as? String)
+        let normalizedModality = rawModality?.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+
+        guard let modality = normalizedModality, supportedModalities.contains(modality) else {
+            throw ActiveSeriesExportError.unsupportedModality(normalizedModality)
+        }
+
+        let paths = normalizePaths(from: series.paths())
+        guard !paths.isEmpty else {
+            throw ActiveSeriesExportError.missingSlices
+        }
+
+        let exportDirectory = try makeExportDirectory()
+        let seriesIdentifierSource = series.seriesInstanceUID
+            ?? (series.value(forKey: "seriesInstanceUID") as? String)
+        let seriesIdentifier = seriesIdentifierSource.map { sanitizePathComponent($0) } ?? UUID().uuidString
+
+        let seriesDirectory = exportDirectory.appendingPathComponent(seriesIdentifier, isDirectory: true)
+        try FileManager.default.createDirectory(at: seriesDirectory, withIntermediateDirectories: true)
+
+        var copiedFiles: [URL] = []
+
+        do {
+            for path in paths {
+                let sourceURL = URL(fileURLWithPath: path)
+                let destinationURL = seriesDirectory.appendingPathComponent(sourceURL.lastPathComponent)
+
+                if FileManager.default.fileExists(atPath: destinationURL.path) {
+                    copiedFiles.append(destinationURL)
+                    continue
+                }
+
+                try FileManager.default.copyItem(at: sourceURL, to: destinationURL)
+                copiedFiles.append(destinationURL)
+            }
+        } catch {
+            throw ActiveSeriesExportError.exportFailed(underlying: error)
+        }
+
+        guard !copiedFiles.isEmpty else {
+            throw ActiveSeriesExportError.missingSlices
+        }
+
+        let exportedSeries = ExportedSeries(
+            series: series,
+            modality: modality,
+            exportedDirectory: seriesDirectory,
+            exportedFiles: copiedFiles,
+            seriesInstanceUID: seriesIdentifierSource,
+            studyInstanceUID: series.study?.studyInstanceUID
+        )
+
+        return ExportResult(directory: exportDirectory, series: [exportedSeries])
     }
 
     private func exportCompatibleSeries(from study: DicomStudy) throws -> ExportResult {
@@ -567,6 +671,108 @@ class TotalSegmentatorHorosPlugin: PluginFilter {
         return ExportResult(directory: exportDirectory, series: exportedSeries)
     }
 
+    private func prepareBridgeScript(at directory: URL) throws -> URL {
+        let scriptURL = directory.appendingPathComponent("TotalSegmentatorBridge.py", isDirectory: false)
+        let scriptContents = """
+import argparse
+import json
+import subprocess
+import sys
+import traceback
+from pathlib import Path
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Bridge script for the Horos TotalSegmentator plugin")
+    parser.add_argument("--config", required=True, help="Path to the configuration JSON file")
+    args = parser.parse_args()
+
+    with open(args.config, "r", encoding="utf-8") as handle:
+        config = json.load(handle)
+
+    dicom_dir = Path(config["dicom_dir"]).expanduser()
+    nifti_path = Path(config["nifti_path"]).expanduser()
+    output_dir = Path(config["output_dir"]).expanduser()
+    tmp_dir = Path(config["tmp_dir"]).expanduser()
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+    nifti_path.parent.mkdir(parents=True, exist_ok=True)
+    tmp_dir.mkdir(parents=True, exist_ok=True)
+
+    print(f"[TotalSegmentatorBridge] Converting '{dicom_dir}' to '{nifti_path}'", flush=True)
+    try:
+        from totalsegmentator.dicom_io import dcm_to_nifti
+        dcm_to_nifti(str(dicom_dir), str(nifti_path), tmp_dir=tmp_dir)
+    except Exception as exc:
+        print("[TotalSegmentatorBridge] DICOM to NIfTI conversion failed:", file=sys.stderr, flush=True)
+        traceback.print_exc()
+        return 1
+
+    print("[TotalSegmentatorBridge] Conversion finished. Launching TotalSegmentator...", flush=True)
+
+    command = [
+        sys.executable,
+        "-m",
+        "totalsegmentator.bin.TotalSegmentator",
+        "-i",
+        str(nifti_path),
+        "-o",
+        str(output_dir),
+        "--output_type",
+        config["output_type"],
+    ]
+    command.extend(config.get("totalseg_args", []))
+
+    print("[TotalSegmentatorBridge] Executing: " + " ".join(command), flush=True)
+
+    try:
+        result = subprocess.run(command, check=False)
+    except Exception:
+        print("[TotalSegmentatorBridge] Failed to execute TotalSegmentator:", file=sys.stderr, flush=True)
+        traceback.print_exc()
+        return 1
+
+    if result.returncode != 0:
+        print(f"[TotalSegmentatorBridge] TotalSegmentator exited with status {result.returncode}", file=sys.stderr, flush=True)
+
+    return result.returncode
+
+
+if __name__ == "__main__":
+    sys.exit(main())
+"""
+
+        try scriptContents.write(to: scriptURL, atomically: true, encoding: .utf8)
+
+        return scriptURL
+    }
+
+    private func writeBridgeConfiguration(
+        to directory: URL,
+        dicomDirectory: URL,
+        niftiURL: URL,
+        temporaryDirectory: URL,
+        outputDirectory: URL,
+        outputType: String,
+        totalsegmentatorArguments: [String]
+    ) throws -> URL {
+        let configurationURL = directory.appendingPathComponent("TotalSegmentatorBridgeConfiguration.json", isDirectory: false)
+
+        let payload: [String: Any] = [
+            "dicom_dir": dicomDirectory.path,
+            "nifti_path": niftiURL.path,
+            "tmp_dir": temporaryDirectory.path,
+            "output_dir": outputDirectory.path,
+            "output_type": outputType,
+            "totalseg_args": totalsegmentatorArguments
+        ]
+
+        let data = try JSONSerialization.data(withJSONObject: payload, options: [.prettyPrinted])
+        try data.write(to: configurationURL, options: .atomic)
+
+        return configurationURL
+    }
+
     private func normalizeSeriesCollection(_ value: Any?) -> [DicomSeries] {
         if let series = value as? [DicomSeries] {
             return series
@@ -639,6 +845,16 @@ class TotalSegmentatorHorosPlugin: PluginFilter {
         try FileManager.default.createDirectory(at: exportDirectory, withIntermediateDirectories: true)
 
         return exportDirectory
+    }
+
+    private func cleanupTemporaryDirectory(_ url: URL) {
+        do {
+            if FileManager.default.fileExists(atPath: url.path) {
+                try FileManager.default.removeItem(at: url)
+            }
+        } catch {
+            NSLog("[TotalSegmentator] Failed to clean temporary directory %@: %@", url.path, error.localizedDescription)
+        }
     }
 
     private func sanitizePathComponent(_ value: String) -> String {
@@ -728,35 +944,109 @@ class TotalSegmentatorHorosPlugin: PluginFilter {
         preferences.store(updated)
     }
 
-    private func resolveExecutable(using preferences: SegmentationPreferences.State) -> (executableURL: URL, leadingArguments: [String], environment: [String: String]?)? {
-        if let explicitPath = preferences.executablePath,
-           !explicitPath.isEmpty {
-            let trimmed = explicitPath.trimmingCharacters(in: .whitespacesAndNewlines)
-            if trimmed.hasPrefix("/") {
-                let url = URL(fileURLWithPath: trimmed)
-                guard FileManager.default.isExecutableFile(atPath: url.path) else {
-                    return nil
-                }
-                return (url, [], nil)
-            } else {
-                return (
-                    URL(fileURLWithPath: "/usr/bin/env"),
-                    [trimmed],
-                    nil
-                )
-            }
+    private func resolvePythonInterpreter(using preferences: SegmentationPreferences.State) -> ExecutableResolution? {
+        if let explicitPath = preferences.executablePath?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !explicitPath.isEmpty,
+           let resolution = interpreterResolution(for: explicitPath) {
+            return resolution
         }
 
-        if let bundled = try? preferences.defaultExecutableURL(),
-           FileManager.default.isExecutableFile(atPath: bundled.path) {
-            return (bundled, [], nil)
+        if let defaultExecutable = try? preferences.defaultExecutableURL(),
+           let resolution = interpreterResolution(for: defaultExecutable.path) {
+            return resolution
         }
 
         return (
             URL(fileURLWithPath: "/usr/bin/env"),
-            ["TotalSegmentator"],
+            ["python3"],
             nil
         )
+    }
+
+    private func interpreterResolution(for path: String) -> ExecutableResolution? {
+        if path.hasPrefix("/") {
+            let url = URL(fileURLWithPath: path)
+
+            if isPythonExecutable(url) {
+                return (url, [], nil)
+            }
+
+            if let shebang = shebangResolution(for: url) {
+                return shebang
+            }
+
+            if url.pathExtension.lowercased() == "py" {
+                return (
+                    URL(fileURLWithPath: "/usr/bin/env"),
+                    ["python3", url.path],
+                    nil
+                )
+            }
+
+            return nil
+        } else {
+            if path.lowercased().contains("python") {
+                return (
+                    URL(fileURLWithPath: "/usr/bin/env"),
+                    [path],
+                    nil
+                )
+            }
+
+            if let located = locateExecutableInPATH(named: path) {
+                if isPythonExecutable(located) {
+                    return (located, [], nil)
+                }
+
+                if let shebang = shebangResolution(for: located) {
+                    return shebang
+                }
+            }
+
+            return nil
+        }
+    }
+
+    private func locateExecutableInPATH(named command: String) -> URL? {
+        let fileManager = FileManager.default
+        let pathVariable = ProcessInfo.processInfo.environment["PATH"] ?? ""
+        for entry in pathVariable.split(separator: ":") {
+            let directory = entry.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !directory.isEmpty else { continue }
+            let candidate = URL(fileURLWithPath: directory).appendingPathComponent(command)
+            if fileManager.isExecutableFile(atPath: candidate.path) {
+                return candidate
+            }
+        }
+        return nil
+    }
+
+    private func isPythonExecutable(_ url: URL) -> Bool {
+        let name = url.lastPathComponent.lowercased()
+        return name == "python" || name == "python3" || name.hasPrefix("python3") || name.hasPrefix("python")
+    }
+
+    private func shebangResolution(for url: URL) -> ExecutableResolution? {
+        guard FileManager.default.isReadableFile(atPath: url.path) else { return nil }
+
+        guard let handle = try? FileHandle(forReadingFrom: url) else { return nil }
+        defer { handle.closeFile() }
+
+        let data = handle.readData(ofLength: 256)
+        guard let contents = String(data: data, encoding: .utf8) else { return nil }
+        guard let firstLine = contents.components(separatedBy: .newlines).first, firstLine.hasPrefix("#!") else {
+            return nil
+        }
+
+        let shebangBody = firstLine.dropFirst(2)
+        let components = shebangBody.split(whereSeparator: { $0.isWhitespace }).map(String.init).filter { !$0.isEmpty }
+        guard !components.isEmpty else { return nil }
+
+        let executablePath = components[0]
+        let arguments = Array(components.dropFirst())
+
+        let executableURL = URL(fileURLWithPath: executablePath)
+        return (executableURL, arguments, nil)
     }
 
     private func makeProgressWindow(for process: Process) -> SegmentationProgressWindowController {
@@ -1147,7 +1437,7 @@ class TotalSegmentatorHorosPlugin: PluginFilter {
     private func fetchTotalSegmentatorVersion(using executable: ExecutableResolution) -> String? {
         let process = Process()
         process.executableURL = executable.executableURL
-        process.arguments = executable.leadingArguments + ["--version"]
+        process.arguments = executable.leadingArguments + ["-m", "totalsegmentator.bin.TotalSegmentator", "--version"]
         process.environment = executable.environment
 
         let pipe = Pipe()
