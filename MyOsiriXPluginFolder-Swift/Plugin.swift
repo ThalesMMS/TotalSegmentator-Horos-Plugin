@@ -2905,7 +2905,6 @@ private extension TotalSegmentatorHorosPlugin {
             var licenseKey: String?
             var selectedClassNames: [String]
             var dcm2niixPath: String?
-            var licenseKey: String?
             var hideROIs: Bool = false
         }
 
@@ -2918,7 +2917,6 @@ private extension TotalSegmentatorHorosPlugin {
             static let licenseKey = "TotalSegmentatorLicenseKey"
             static let selectedClasses = "TotalSegmentatorSelectedClasses"
             static let dcm2niixPath = "TotalSegmentatorDcm2NiixPath"
-            static let licenseKey = "TotalSegmentatorLicenseKey"
             static let hideROIs = "TotalSegmentatorHideROIs"
         }
 
@@ -2934,7 +2932,6 @@ private extension TotalSegmentatorHorosPlugin {
                 licenseKey: defaults.string(forKey: Keys.licenseKey),
                 selectedClassNames: defaults.stringArray(forKey: Keys.selectedClasses) ?? [],
                 dcm2niixPath: defaults.string(forKey: Keys.dcm2niixPath),
-                licenseKey: defaults.string(forKey: Keys.licenseKey)
                 hideROIs: defaults.bool(forKey: Keys.hideROIs)
             )
         }
@@ -2948,7 +2945,6 @@ private extension TotalSegmentatorHorosPlugin {
             defaults.setValue(state.licenseKey, forKey: Keys.licenseKey)
             defaults.setValue(state.selectedClassNames, forKey: Keys.selectedClasses)
             defaults.setValue(state.dcm2niixPath, forKey: Keys.dcm2niixPath)
-            defaults.setValue(state.licenseKey, forKey: Keys.licenseKey)
             defaults.setValue(state.hideROIs, forKey: Keys.hideROIs)
         }
 
