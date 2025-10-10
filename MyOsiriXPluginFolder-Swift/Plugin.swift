@@ -310,9 +310,6 @@ class TotalSegmentatorHorosPlugin: PluginFilter {
             return
         }
 
-        let niftiURL = exportResult.directory.appendingPathComponent("converted_series.nii.gz", isDirectory: false)
-        let bridgeTemporaryDirectory = exportResult.directory.appendingPathComponent("conversion_tmp", isDirectory: true)
-
         let bridgeScriptURL: URL
         let configurationURL: URL
 
@@ -321,8 +318,6 @@ class TotalSegmentatorHorosPlugin: PluginFilter {
             configurationURL = try writeBridgeConfiguration(
                 to: exportResult.directory,
                 dicomDirectory: primarySeries.exportedDirectory,
-                niftiURL: niftiURL,
-                temporaryDirectory: bridgeTemporaryDirectory,
                 outputDirectory: output,
                 outputType: effectiveOutputType.description,
                 totalsegmentatorArguments: totalSegmentatorArguments
@@ -691,31 +686,20 @@ def main():
         config = json.load(handle)
 
     dicom_dir = Path(config["dicom_dir"]).expanduser()
-    nifti_path = Path(config["nifti_path"]).expanduser()
     output_dir = Path(config["output_dir"]).expanduser()
-    tmp_dir = Path(config["tmp_dir"]).expanduser()
 
     output_dir.mkdir(parents=True, exist_ok=True)
-    nifti_path.parent.mkdir(parents=True, exist_ok=True)
-    tmp_dir.mkdir(parents=True, exist_ok=True)
 
-    print(f"[TotalSegmentatorBridge] Converting '{dicom_dir}' to '{nifti_path}'", flush=True)
-    try:
-        from totalsegmentator.dicom_io import dcm_to_nifti
-        dcm_to_nifti(str(dicom_dir), str(nifti_path), tmp_dir=tmp_dir)
-    except Exception as exc:
-        print("[TotalSegmentatorBridge] DICOM to NIfTI conversion failed:", file=sys.stderr, flush=True)
-        traceback.print_exc()
+    if not dicom_dir.exists():
+        print(f"[TotalSegmentatorBridge] Input DICOM directory '{dicom_dir}' does not exist", file=sys.stderr, flush=True)
         return 1
-
-    print("[TotalSegmentatorBridge] Conversion finished. Launching TotalSegmentator...", flush=True)
 
     command = [
         sys.executable,
         "-m",
         "totalsegmentator.bin.TotalSegmentator",
         "-i",
-        str(nifti_path),
+        str(dicom_dir),
         "-o",
         str(output_dir),
         "--output_type",
@@ -750,8 +734,6 @@ if __name__ == "__main__":
     private func writeBridgeConfiguration(
         to directory: URL,
         dicomDirectory: URL,
-        niftiURL: URL,
-        temporaryDirectory: URL,
         outputDirectory: URL,
         outputType: String,
         totalsegmentatorArguments: [String]
@@ -760,8 +742,6 @@ if __name__ == "__main__":
 
         let payload: [String: Any] = [
             "dicom_dir": dicomDirectory.path,
-            "nifti_path": niftiURL.path,
-            "tmp_dir": temporaryDirectory.path,
             "output_dir": outputDirectory.path,
             "output_type": outputType,
             "totalseg_args": totalsegmentatorArguments
