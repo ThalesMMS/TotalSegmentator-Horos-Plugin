@@ -155,6 +155,7 @@ class TotalSegmentatorHorosPlugin: PluginFilter {
     @IBOutlet private weak var taskPopupButton: NSPopUpButton!
     @IBOutlet private weak var devicePopupButton: NSPopUpButton!
     @IBOutlet private weak var fastModeCheckbox: NSButton!
+    @IBOutlet private weak var hideROIsCheckbox: NSButton!
     @IBOutlet private weak var additionalArgumentsField: NSTextField!
     @IBOutlet private weak var classSelectionSummaryField: NSTextField!
     @IBOutlet private weak var classSelectionButton: NSButton!
@@ -1901,6 +1902,7 @@ if __name__ == "__main__":
         executablePathField?.stringValue = current.executablePath ?? ""
         additionalArgumentsField?.stringValue = current.additionalArguments ?? ""
         fastModeCheckbox?.state = current.useFast ? .on : .off
+        hideROIsCheckbox?.state = current.hideROIs ? .on : .off
         selectedClassNames = Set(current.selectedClassNames)
 
         if let task = current.task,
@@ -1930,6 +1932,7 @@ if __name__ == "__main__":
         }
 
         updated.useFast = fastModeCheckbox?.state == .on
+        updated.hideROIs = hideROIsCheckbox?.state == .on
 
         if let selectedDevice = devicePopupButton?.selectedItem?.representedObject as? String {
             updated.device = selectedDevice
@@ -2223,7 +2226,12 @@ if __name__ == "__main__":
             throw SegmentationPostProcessingError.unsupportedOutputType(value)
         }
 
-        updateVisualization(with: importResult, exportContext: exportContext, progressController: progressController)
+        updateVisualization(
+            with: importResult,
+            exportContext: exportContext,
+            preferences: preferences,
+            progressController: progressController
+        )
         persistAuditMetadata(
             for: importResult,
             exportContext: exportContext,
@@ -2451,9 +2459,17 @@ if __name__ == "__main__":
     private func updateVisualization(
         with importResult: SegmentationImportResult,
         exportContext: ExportResult,
+        preferences: SegmentationPreferences.State,
         progressController: SegmentationProgressWindowController?
     ) {
         guard importResult.outputType == .dicom, !importResult.rtStructPaths.isEmpty else {
+            return
+        }
+
+        if preferences.hideROIs {
+            DispatchQueue.main.async {
+                progressController?.append("Skipping ROI overlay display per preferences.")
+            }
             return
         }
 
@@ -2728,6 +2744,7 @@ private extension TotalSegmentatorHorosPlugin {
             var additionalArguments: String?
             var selectedClassNames: [String]
             var dcm2niixPath: String?
+            var hideROIs: Bool = false
         }
 
         private enum Keys {
@@ -2738,6 +2755,7 @@ private extension TotalSegmentatorHorosPlugin {
             static let additionalArguments = "TotalSegmentatorAdditionalArguments"
             static let selectedClasses = "TotalSegmentatorSelectedClasses"
             static let dcm2niixPath = "TotalSegmentatorDcm2NiixPath"
+            static let hideROIs = "TotalSegmentatorHideROIs"
         }
 
         private let defaults = UserDefaults.standard
@@ -2750,7 +2768,8 @@ private extension TotalSegmentatorHorosPlugin {
                 device: defaults.string(forKey: Keys.device),
                 additionalArguments: defaults.string(forKey: Keys.additionalArguments),
                 selectedClassNames: defaults.stringArray(forKey: Keys.selectedClasses) ?? [],
-                dcm2niixPath: defaults.string(forKey: Keys.dcm2niixPath)
+                dcm2niixPath: defaults.string(forKey: Keys.dcm2niixPath),
+                hideROIs: defaults.bool(forKey: Keys.hideROIs)
             )
         }
 
@@ -2762,6 +2781,7 @@ private extension TotalSegmentatorHorosPlugin {
             defaults.setValue(state.additionalArguments, forKey: Keys.additionalArguments)
             defaults.setValue(state.selectedClassNames, forKey: Keys.selectedClasses)
             defaults.setValue(state.dcm2niixPath, forKey: Keys.dcm2niixPath)
+            defaults.setValue(state.hideROIs, forKey: Keys.hideROIs)
         }
 
         func defaultExecutableURL() throws -> URL {

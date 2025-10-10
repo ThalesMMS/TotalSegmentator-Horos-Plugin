@@ -11,6 +11,7 @@
                 <outlet property="devicePopupButton" destination="8fT-dX-eA2" id="JdI-rL-bMZ"/>
                 <outlet property="executablePathField" destination="AVX-iQ-7ju" id="T9U-7o-7rj"/>
                 <outlet property="fastModeCheckbox" destination="Ifv-9h-1EY" id="wDP-QH-jf5"/>
+                <outlet property="hideROIsCheckbox" destination="HPb-9s-3rF" id="8UL-dW-6aM"/>
                 <outlet property="classSelectionButton" destination="q4x-4H-7gx" id="qfS-4s-4Fk"/>
                 <outlet property="classSelectionSummaryField" destination="JmA-7V-gwN" id="SO6-jL-Kh2"/>
                 <outlet property="settingsWindow" destination="1" id="ax2-hq-ygQ"/>
@@ -87,6 +88,13 @@
                     <button translatesAutoresizingMaskIntoConstraints="NO" id="Ifv-9h-1EY">
                         <rect key="frame" x="302" y="128" width="150" height="18"/>
                         <buttonCell key="cell" type="check" title="Fast mode" bezelStyle="regularSquare" imagePosition="left" state="off" inset="2" id="2B0-wv-SuK">
+                            <behavior key="behavior" changeContents="YES" lightByContents="YES"/>
+                            <font key="font" metaFont="system"/>
+                        </buttonCell>
+                    </button>
+                    <button translatesAutoresizingMaskIntoConstraints="NO" id="HPb-9s-3rF">
+                        <rect key="frame" x="20" y="100" width="164" height="18"/>
+                        <buttonCell key="cell" type="check" title="Don't display ROIs" bezelStyle="regularSquare" imagePosition="left" state="off" inset="2" id="p2A-ig-eCL">
                             <behavior key="behavior" changeContents="YES" lightByContents="YES"/>
                             <font key="font" metaFont="system"/>
                         </buttonCell>
@@ -181,11 +189,13 @@
                     <constraint firstAttribute="trailing" secondItem="q4x-4H-7gx" secondAttribute="trailing" constant="20" id="LiR-e5-Wi1"/>
                     <constraint firstItem="q4x-4H-7gx" firstAttribute="centerY" secondItem="JmA-7V-gwN" secondAttribute="centerY" id="S8k-d3-Mly"/>
                     <constraint firstItem="nQl-8N-9dB" firstAttribute="top" secondItem="JmA-7V-gwN" secondAttribute="bottom" constant="16" id="Tkq-eN-PLe"/>
-                    <constraint firstItem="0jy-mL-T41" firstAttribute="top" secondItem="Ifv-9h-1EY" secondAttribute="bottom" constant="16" id="ZQO-2v-9cc"/>
+                    <constraint firstItem="0jy-mL-T41" firstAttribute="top" secondItem="HPb-9s-3rF" secondAttribute="bottom" constant="16" id="ZQO-2v-9cc"/>
                     <constraint firstItem="6Qv-6F-bbf" firstAttribute="leading" secondItem="2" secondAttribute="leading" constant="20" id="blK-p3-FS9"/>
                     <constraint firstItem="6Qv-6F-bbf" firstAttribute="baseline" secondItem="M3d-RG-svS" secondAttribute="baseline" id="cZp-WJ-3vq"/>
                     <constraint firstItem="0jy-mL-T41" firstAttribute="baseline" secondItem="8fT-dX-eA2" secondAttribute="baseline" id="eh8-8r-tcp"/>
                     <constraint firstItem="6Qv-6F-bbf" firstAttribute="top" secondItem="M3d-RG-svS" secondAttribute="bottom" constant="28" id="npE-9Q-pJv"/>
+                    <constraint firstItem="HPb-9s-3rF" firstAttribute="leading" secondItem="2" secondAttribute="leading" constant="20" id="vKd-4v-91x"/>
+                    <constraint firstItem="HPb-9s-3rF" firstAttribute="top" secondItem="M3d-RG-svS" secondAttribute="bottom" constant="12" id="yQj-hT-u9Y"/>
                     <constraint firstItem="AVX-iQ-7ju" firstAttribute="trailing" secondItem="Z4y-SO-h4R" secondAttribute="leading" constant="-16" id="oQL-bB-fLk"/>
                     <constraint firstItem="kYZ-3v-EcE" firstAttribute="leading" secondItem="2" secondAttribute="leading" constant="20" id="rYo-f0-QJM"/>
                     <constraint firstItem="qfu-FH-JnY" firstAttribute="trailing" secondItem="43" secondAttribute="leading" constant="-12" id="l1I-dQ-9pQ"/>
