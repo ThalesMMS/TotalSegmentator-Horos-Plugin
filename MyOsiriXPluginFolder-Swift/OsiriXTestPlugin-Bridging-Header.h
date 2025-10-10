@@ -2,5 +2,5 @@
 //  Use this file to import your target's public headers that you would like to expose to Swift.
 //
 
-#import <OsiriXAPI/PluginFilter.h>
-#import <OsiriXAPI/BrowserController.h>
+#import <Horos/PluginFilter.h>
+#import <Horos/BrowserController.h>
