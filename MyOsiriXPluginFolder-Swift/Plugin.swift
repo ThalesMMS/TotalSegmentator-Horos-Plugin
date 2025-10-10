@@ -247,44 +247,44 @@ class TotalSegmentatorHorosPlugin: PluginFilter {
         return 0
     }
 
-    override func toolbarAllowedIdentifiersForViewer(_ controller: Any!) -> [Any]! {
-        var identifiers = normalizedToolbarIdentifiers(from: super.toolbarAllowedIdentifiersForViewer(controller))
+    override func toolbarAllowedIdentifiers(forViewer controller: Any!) -> [Any]! {
+        var identifiers = normalizedToolbarIdentifiers(from: super.toolbarAllowedIdentifiers(forViewer: controller))
         if !identifiers.contains(ToolbarItemConfiguration.viewerIdentifier) {
             identifiers.append(ToolbarItemConfiguration.viewerIdentifier)
         }
         return identifiers
     }
 
-    override func toolbarAllowedIdentifiersForVRViewer(_ controller: Any!) -> [Any]! {
-        var identifiers = normalizedToolbarIdentifiers(from: super.toolbarAllowedIdentifiersForVRViewer(controller))
+    override func toolbarAllowedIdentifiers(forVRViewer controller: Any!) -> [Any]! {
+        var identifiers = normalizedToolbarIdentifiers(from: super.toolbarAllowedIdentifiers(forVRViewer: controller))
         if !identifiers.contains(ToolbarItemConfiguration.viewerIdentifier) {
             identifiers.append(ToolbarItemConfiguration.viewerIdentifier)
         }
         return identifiers
     }
 
-    override func toolbarItemForItemIdentifier(_ identifier: String!, forViewer controller: Any!) -> NSToolbarItem! {
+    override func toolbarItem(forItemIdentifier identifier: String!, forViewer controller: Any!) -> NSToolbarItem! {
         guard let identifier = identifier else {
-            return super.toolbarItemForItemIdentifier(identifier, forViewer: controller)
+            return super.toolbarItem(forItemIdentifier: identifier, forViewer: controller)
         }
 
         if NSToolbarItem.Identifier(identifier) == ToolbarItemConfiguration.viewerIdentifier {
             return makeSegmentationToolbarItem()
         }
 
-        return super.toolbarItemForItemIdentifier(identifier, forViewer: controller)
+        return super.toolbarItem(forItemIdentifier: identifier, forViewer: controller)
     }
 
-    override func toolbarItemForItemIdentifier(_ identifier: String!, forVRViewer controller: Any!) -> NSToolbarItem! {
+    override func toolbarItem(forItemIdentifier identifier: String!, forVRViewer controller: Any!) -> NSToolbarItem! {
         guard let identifier = identifier else {
-            return super.toolbarItemForItemIdentifier(identifier, forVRViewer: controller)
+            return super.toolbarItem(forItemIdentifier: identifier, forVRViewer: controller)
         }
 
         if NSToolbarItem.Identifier(identifier) == ToolbarItemConfiguration.viewerIdentifier {
             return makeSegmentationToolbarItem()
         }
 
-        return super.toolbarItemForItemIdentifier(identifier, forVRViewer: controller)
+        return super.toolbarItem(forItemIdentifier: identifier, forVRViewer: controller)
     }
 
     private func presentSettingsWindow() {
@@ -307,7 +307,7 @@ class TotalSegmentatorHorosPlugin: PluginFilter {
             return
         }
 
-        NSApp.beginSheet(window, modalFor: browserWindow, modalDelegate: nil, didEnd: nil, contextInfo: nil)
+        browserWindow.beginSheet(window, completionHandler: nil)
     }
 
     @IBAction private func closeSettings(_ sender: Any) {
@@ -364,7 +364,7 @@ class TotalSegmentatorHorosPlugin: PluginFilter {
     }
 
     @IBAction private func selectClasses(_ sender: Any) {
-        guard let settingsWindow = settingsWindow else { return }
+        guard settingsWindow != nil else { return }
 
         let storedPreferences = self.preferences.effectivePreferences()
         var effectivePreferences = storedPreferences
@@ -451,7 +451,7 @@ class TotalSegmentatorHorosPlugin: PluginFilter {
         let taskLiteral: String
         if let rawTask = task?.trimmingCharacters(in: .whitespacesAndNewlines), !rawTask.isEmpty {
             let escaped = rawTask
-                .replacingOccurrences(of: "\", with: "\\")
+                .replacingOccurrences(of: "\\", with: "\\\\")
                 .replacingOccurrences(of: "\"", with: "\\\"")
             taskLiteral = "\"" + escaped + "\""
         } else {
@@ -1130,7 +1130,7 @@ After installing the package, re-run the segmentation.
             deviceOptions: deviceOptions,
             classSummaryText: classSummary.text,
             classSummaryTooltip: classSummary.tooltip,
-            outputDirectory: nil
+            outputDirectory: (nil as URL?)
         )
 
         controller.onCompletion = { [weak self] result in
@@ -1450,12 +1450,12 @@ After installing the package, re-run the segmentation.
 
         let supportedModalities: Set<String> = ["CT", "MR"]
 
-        guard let series = viewer.seriesObj else {
+        guard let series = viewer.imageView()?.seriesObj() as? DicomSeries else {
             throw ActiveSeriesExportError.missingSeries
         }
 
-        let rawModality = series.modality ?? (series.value(forKey: "modality") as? String)
-        let normalizedModality = rawModality?.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+        let rawModality = (series.modality as String?) ?? (series.value(forKey: "modality") as? String)
+        let normalizedModality = rawModality?.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines).uppercased()
 
         guard let modality = normalizedModality, supportedModalities.contains(modality) else {
             throw ActiveSeriesExportError.unsupportedModality(normalizedModality)
@@ -2220,14 +2220,14 @@ set_license_number(license_value, skip_validation=skip_validation)
         }
     }
 
-    private func resolvePythonInterpreter(using preferences: SegmentationPreferences.State) -> ExecutableResolution? {
-        if let explicitPath = preferences.executablePath?.trimmingCharacters(in: .whitespacesAndNewlines),
+    private func resolvePythonInterpreter(using preferencesState: SegmentationPreferences.State) -> ExecutableResolution? {
+        if let explicitPath = preferencesState.executablePath?.trimmingCharacters(in: .whitespacesAndNewlines),
            !explicitPath.isEmpty,
            let resolution = interpreterResolution(for: explicitPath) {
             return resolution
         }
 
-        if let defaultExecutable = try? preferences.defaultExecutableURL(),
+        if let defaultExecutable = try? self.preferences.defaultExecutableURL(),
            let resolution = interpreterResolution(for: defaultExecutable.path) {
             return resolution
         }
@@ -2551,7 +2551,7 @@ set_license_number(license_value, skip_validation=skip_validation)
         var importError: Error?
 
         DispatchQueue.main.sync {
-            guard let database = BrowserController.currentBrowser()?.database() else {
+            guard let database = BrowserController.currentBrowser()?.database else {
                 importError = SegmentationPostProcessingError.databaseUnavailable
                 return
             }
@@ -2700,7 +2700,7 @@ set_license_number(license_value, skip_validation=skip_validation)
         var importError: Error?
 
         DispatchQueue.main.sync {
-            guard let database = BrowserController.currentBrowser()?.database() else {
+            guard let database = BrowserController.currentBrowser()?.database else {
                 importError = SegmentationPostProcessingError.databaseUnavailable
                 return
             }
@@ -2763,7 +2763,7 @@ set_license_number(license_value, skip_validation=skip_validation)
                 activeViewer.roiLoad(fromSeries: path)
             }
 
-            if let database = browser.database(),
+            if let database = browser.database,
                let importedObjects = database.objects(withIDs: importResult.importedObjectIDs) as? [NSManagedObject] {
                 let importedSeries = importedObjects.compactMap { $0 as? DicomSeries }
                 let targetSeries = importedSeries.first { series in
@@ -2772,7 +2772,7 @@ set_license_number(license_value, skip_validation=skip_validation)
                 } ?? importedSeries.first
 
                 if let series = targetSeries, let study = series.study {
-                    browser.selectStudy(withObjectID: study.objectID)
+                    browser.selectStudy(with: study.objectID)
                 }
             }
 
@@ -2785,7 +2785,7 @@ set_license_number(license_value, skip_validation=skip_validation)
 
     private func openViewer(for exportContext: ExportResult, browser: BrowserController) -> ViewerController? {
         for exportedSeries in exportContext.series {
-            if let viewer = browser.loadSeries(exportedSeries.series, viewer: nil, firstViewer: true, keyImagesOnly: false) {
+            if let viewer = browser.loadSeries(exportedSeries.series, nil, true, keyImagesOnly: false) {
                 return viewer
             }
         }
@@ -3007,7 +3007,7 @@ set_license_number(license_value, skip_validation=skip_validation)
     }
 }
 
-private extension TotalSegmentatorHorosPlugin {
+extension TotalSegmentatorHorosPlugin {
     struct SegmentationPreferences {
         struct State {
             var executablePath: String?

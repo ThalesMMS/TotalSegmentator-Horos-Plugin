@@ -7,27 +7,27 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-                CEC0F6EB28BF45CD003DD38F /* Horos.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CEC0F6E928BF45CD003DD38F /* Horos.framework */; };
-                CEC0F6EE28BF49EB003DD38F /* Settings.xib in Resources */ = {isa = PBXBuildFile; fileRef = CEC0F6EC28BF49EB003DD38F /* Settings.xib */; };
-                CEC0F6F228BF8DF5003DD38F /* Plugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEC0F6F128BF8DF5003DD38F /* Plugin.swift */; };
-                D2D8D2032AF5A00100AAA111 /* RunSegmentationWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = D2D8D2042AF5A00100AAA111 /* RunSegmentationWindowController.xib */; };
-                D2D8D2062AF5A9D200AAA111 /* TotalSegmentatorToolbar.png in Resources */ = {isa = PBXBuildFile; fileRef = D2D8D2072AF5A9D200AAA111 /* TotalSegmentatorToolbar.png */; };
-                D2D8D2052AF5A00100AAA111 /* RunSegmentationWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2D8D2022AF5A00100AAA111 /* RunSegmentationWindowController.swift */; };
-                D2D8D2092AF5B3B400AAA111 /* ClassSelectionWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2D8D2082AF5B3B400AAA111 /* ClassSelectionWindowController.swift */; };
-                D2D8D20B2AF5B3CF00AAA111 /* SegmentationProgressWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2D8D20A2AF5B3CF00AAA111 /* SegmentationProgressWindowController.swift */; };
+		CEC0F6EB28BF45CD003DD38F /* Horos.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CEC0F6E928BF45CD003DD38F /* Horos.framework */; };
+		CEC0F6EE28BF49EB003DD38F /* Settings.xib in Resources */ = {isa = PBXBuildFile; fileRef = CEC0F6EC28BF49EB003DD38F /* Settings.xib */; };
+		CEC0F6F228BF8DF5003DD38F /* Plugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEC0F6F128BF8DF5003DD38F /* Plugin.swift */; };
+		D2D8D2032AF5A00100AAA111 /* RunSegmentationWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = D2D8D2042AF5A00100AAA111 /* RunSegmentationWindowController.xib */; };
+		D2D8D2052AF5A00100AAA111 /* RunSegmentationWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2D8D2022AF5A00100AAA111 /* RunSegmentationWindowController.swift */; };
+		D2D8D2062AF5A9D200AAA111 /* TotalSegmentatorToolbar.png in Resources */ = {isa = PBXBuildFile; fileRef = D2D8D2072AF5A9D200AAA111 /* TotalSegmentatorToolbar.png */; };
+		D2D8D2092AF5B3B400AAA111 /* ClassSelectionWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2D8D2082AF5B3B400AAA111 /* ClassSelectionWindowController.swift */; };
+		D2D8D20B2AF5B3CF00AAA111 /* SegmentationProgressWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2D8D20A2AF5B3CF00AAA111 /* SegmentationProgressWindowController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		CEC0F6E028BF4354003DD38F /* TotalSegmentatorHorosPlugin.osirixplugin */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TotalSegmentatorHorosPlugin.osirixplugin; sourceTree = BUILT_PRODUCTS_DIR; };
 		CEC0F6E928BF45CD003DD38F /* Horos.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = Horos.framework; sourceTree = "<group>"; };
 		CEC0F6EC28BF49EB003DD38F /* Settings.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = Settings.xib; sourceTree = "<group>"; };
-                CEC0F6F028BF8DF4003DD38F /* TotalSegmentatorHorosPlugin-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "TotalSegmentatorHorosPlugin-Bridging-Header.h"; sourceTree = "<group>"; };
-                CEC0F6F128BF8DF5003DD38F /* Plugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Plugin.swift; sourceTree = "<group>"; };
-                D2D8D2022AF5A00100AAA111 /* RunSegmentationWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunSegmentationWindowController.swift; sourceTree = "<group>"; };
-                D2D8D2042AF5A00100AAA111 /* RunSegmentationWindowController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = RunSegmentationWindowController.xib; sourceTree = "<group>"; };
-                D2D8D2072AF5A9D200AAA111 /* TotalSegmentatorToolbar.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = TotalSegmentatorToolbar.png; sourceTree = "<group>"; };
-                D2D8D2082AF5B3B400AAA111 /* ClassSelectionWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClassSelectionWindowController.swift; sourceTree = "<group>"; };
-                D2D8D20A2AF5B3CF00AAA111 /* SegmentationProgressWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SegmentationProgressWindowController.swift; sourceTree = "<group>"; };
+		CEC0F6F028BF8DF4003DD38F /* TotalSegmentatorHorosPlugin-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "TotalSegmentatorHorosPlugin-Bridging-Header.h"; sourceTree = "<group>"; };
+		CEC0F6F128BF8DF5003DD38F /* Plugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Plugin.swift; sourceTree = "<group>"; };
+		D2D8D2022AF5A00100AAA111 /* RunSegmentationWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunSegmentationWindowController.swift; sourceTree = "<group>"; };
+		D2D8D2042AF5A00100AAA111 /* RunSegmentationWindowController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = RunSegmentationWindowController.xib; sourceTree = "<group>"; };
+		D2D8D2072AF5A9D200AAA111 /* TotalSegmentatorToolbar.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = TotalSegmentatorToolbar.png; sourceTree = "<group>"; };
+		D2D8D2082AF5B3B400AAA111 /* ClassSelectionWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClassSelectionWindowController.swift; sourceTree = "<group>"; };
+		D2D8D20A2AF5B3CF00AAA111 /* SegmentationProgressWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SegmentationProgressWindowController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -42,20 +42,20 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-                CEC0F6D728BF4354003DD38F = {
-                        isa = PBXGroup;
-                        children = (
-                                CEC0F6E928BF45CD003DD38F /* Horos.framework */,
-                                CEC0F6F128BF8DF5003DD38F /* Plugin.swift */,
-                                D2D8D2022AF5A00100AAA111 /* RunSegmentationWindowController.swift */,
-                                D2D8D2082AF5B3B400AAA111 /* ClassSelectionWindowController.swift */,
-                                D2D8D20A2AF5B3CF00AAA111 /* SegmentationProgressWindowController.swift */,
-                                CEC0F6EC28BF49EB003DD38F /* Settings.xib */,
-                                D2D8D2042AF5A00100AAA111 /* RunSegmentationWindowController.xib */,
-                                D2D8D2072AF5A9D200AAA111 /* TotalSegmentatorToolbar.png */,
-                                CEC0F6E128BF4354003DD38F /* Products */,
-                                CEC0F6F028BF8DF4003DD38F /* TotalSegmentatorHorosPlugin-Bridging-Header.h */,
-                        );
+		CEC0F6D728BF4354003DD38F = {
+			isa = PBXGroup;
+			children = (
+				CEC0F6E928BF45CD003DD38F /* Horos.framework */,
+				CEC0F6F128BF8DF5003DD38F /* Plugin.swift */,
+				D2D8D2022AF5A00100AAA111 /* RunSegmentationWindowController.swift */,
+				D2D8D2082AF5B3B400AAA111 /* ClassSelectionWindowController.swift */,
+				D2D8D20A2AF5B3CF00AAA111 /* SegmentationProgressWindowController.swift */,
+				CEC0F6EC28BF49EB003DD38F /* Settings.xib */,
+				D2D8D2042AF5A00100AAA111 /* RunSegmentationWindowController.xib */,
+				D2D8D2072AF5A9D200AAA111 /* TotalSegmentatorToolbar.png */,
+				CEC0F6E128BF4354003DD38F /* Products */,
+				CEC0F6F028BF8DF4003DD38F /* TotalSegmentatorHorosPlugin-Bridging-Header.h */,
+			);
 			sourceTree = "<group>";
 		};
 		CEC0F6E128BF4354003DD38F /* Products */ = {
@@ -93,7 +93,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastUpgradeCheck = 1340;
+				LastUpgradeCheck = 2600;
 				TargetAttributes = {
 					CEC0F6DF28BF4354003DD38F = {
 						CreatedOnToolsVersion = 13.4.1;
@@ -101,7 +101,7 @@
 					};
 				};
 			};
-			buildConfigurationList = CEC0F6DB28BF4354003DD38F /* Build configuration list for PBXProject "OsiriXTestPlugin" */;
+			buildConfigurationList = CEC0F6DB28BF4354003DD38F /* Build configuration list for PBXProject "TotalSegmentatorHorosPlugin" */;
 			compatibilityVersion = "Xcode 13.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -120,30 +120,30 @@
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-                CEC0F6DE28BF4354003DD38F /* Resources */ = {
-                        isa = PBXResourcesBuildPhase;
-                        buildActionMask = 2147483647;
-                        files = (
-                                D2D8D2032AF5A00100AAA111 /* RunSegmentationWindowController.xib in Resources */,
-                                CEC0F6EE28BF49EB003DD38F /* Settings.xib in Resources */,
-                                D2D8D2062AF5A9D200AAA111 /* TotalSegmentatorToolbar.png in Resources */,
-                        );
-                        runOnlyForDeploymentPostprocessing = 0;
-                };
+		CEC0F6DE28BF4354003DD38F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D2D8D2032AF5A00100AAA111 /* RunSegmentationWindowController.xib in Resources */,
+				CEC0F6EE28BF49EB003DD38F /* Settings.xib in Resources */,
+				D2D8D2062AF5A9D200AAA111 /* TotalSegmentatorToolbar.png in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-                CEC0F6DC28BF4354003DD38F /* Sources */ = {
-                        isa = PBXSourcesBuildPhase;
-                        buildActionMask = 2147483647;
-                        files = (
-                                D2D8D2092AF5B3B400AAA111 /* ClassSelectionWindowController.swift in Sources */,
-                                D2D8D20B2AF5B3CF00AAA111 /* SegmentationProgressWindowController.swift in Sources */,
-                                D2D8D2052AF5A00100AAA111 /* RunSegmentationWindowController.swift in Sources */,
-                                CEC0F6F228BF8DF5003DD38F /* Plugin.swift in Sources */,
-                        );
-                        runOnlyForDeploymentPostprocessing = 0;
-                };
+		CEC0F6DC28BF4354003DD38F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D2D8D2092AF5B3B400AAA111 /* ClassSelectionWindowController.swift in Sources */,
+				D2D8D20B2AF5B3CF00AAA111 /* SegmentationProgressWindowController.swift in Sources */,
+				D2D8D2052AF5A00100AAA111 /* RunSegmentationWindowController.swift in Sources */,
+				CEC0F6F228BF8DF5003DD38F /* Plugin.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
@@ -151,6 +151,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
@@ -161,6 +162,7 @@
 				CLANG_WARN_BOOL_CONVERSION = YES;
 				CLANG_WARN_COMMA = YES;
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
 				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
 				CLANG_WARN_EMPTY_BODY = YES;
@@ -179,9 +181,12 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = H4Q6WN7NV5;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -200,6 +205,7 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 			};
 			name = Debug;
 		};
@@ -207,6 +213,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
@@ -217,6 +224,7 @@
 				CLANG_WARN_BOOL_CONVERSION = YES;
 				CLANG_WARN_COMMA = YES;
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
 				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
 				CLANG_WARN_EMPTY_BODY = YES;
@@ -235,9 +243,12 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = H4Q6WN7NV5;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -249,6 +260,8 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
 			};
 			name = Release;
 		};
@@ -256,20 +269,20 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_IDENTITY = "-";
-				CODE_SIGN_STYLE = Manual;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				DEAD_CODE_STRIPPING = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-                               GENERATE_INFOPLIST_FILE = NO;
+				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-                                INFOPLIST_KEY_NSPrincipalClass = TotalSegmentatorHorosPlugin;
+				INFOPLIST_KEY_NSPrincipalClass = TotalSegmentatorHorosPlugin;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Bundles";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -281,7 +294,7 @@
 					"-undefined",
 					dynamic_lookup,
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.totalsegmentator.horosplugin;
+				PRODUCT_BUNDLE_IDENTIFIER = com.totalsegmentator.thalesmms;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SKIP_INSTALL = YES;
@@ -297,20 +310,20 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_IDENTITY = "-";
-				CODE_SIGN_STYLE = Manual;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				DEAD_CODE_STRIPPING = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-                               GENERATE_INFOPLIST_FILE = NO;
+				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-                                INFOPLIST_KEY_NSPrincipalClass = TotalSegmentatorHorosPlugin;
+				INFOPLIST_KEY_NSPrincipalClass = TotalSegmentatorHorosPlugin;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Bundles";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -322,7 +335,7 @@
 					"-undefined",
 					dynamic_lookup,
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.totalsegmentator.horosplugin;
+				PRODUCT_BUNDLE_IDENTIFIER = com.totalsegmentator.thalesmms;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SKIP_INSTALL = YES;
@@ -336,7 +349,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		CEC0F6DB28BF4354003DD38F /* Build configuration list for PBXProject "OsiriXTestPlugin" */ = {
+		CEC0F6DB28BF4354003DD38F /* Build configuration list for PBXProject "TotalSegmentatorHorosPlugin" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				CEC0F6E228BF4354003DD38F /* Debug */,

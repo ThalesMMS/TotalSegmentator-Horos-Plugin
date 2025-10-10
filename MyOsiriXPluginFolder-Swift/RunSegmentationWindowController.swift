@@ -39,11 +39,14 @@ final class RunSegmentationWindowController: NSWindowController, NSTextFieldDele
 
     init() {
         super.init(window: nil)
-        self.windowNibName = "RunSegmentationWindowController"
     }
 
     required init?(coder: NSCoder) {
         super.init(coder: coder)
+    }
+
+    override var windowNibName: NSNib.Name? {
+        return NSNib.Name("RunSegmentationWindowController")
     }
 
     override func windowDidLoad() {

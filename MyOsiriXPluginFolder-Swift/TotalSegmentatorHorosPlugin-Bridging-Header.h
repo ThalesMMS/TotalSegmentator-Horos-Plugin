@@ -7,3 +7,4 @@
 #import <Horos/DicomStudy.h>
 #import <Horos/DicomSeries.h>
 #import <Horos/DicomFile.h>
+#import <Horos/DicomDatabase.h>
