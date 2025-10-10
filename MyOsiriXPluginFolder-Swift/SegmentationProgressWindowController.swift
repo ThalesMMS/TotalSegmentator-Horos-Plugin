@@ -1,51 +1,75 @@
 import Cocoa
 
 final class SegmentationProgressWindowController: NSWindowController {
-    private let textView = NSTextView(frame: .zero)
-    private let progressIndicator = NSProgressIndicator(frame: .zero)
-    private let cancelButton = NSButton(frame: .zero)
+    private lazy var textView: NSTextView = {
+        let view = NSTextView(frame: .zero)
+        view.isEditable = false
+        view.isSelectable = true
+        view.font = NSFont.monospacedSystemFont(ofSize: 12, weight: .regular)
+        view.textContainerInset = NSSize(width: 4, height: 8)
+        return view
+    }()
+
+    private lazy var progressIndicator: NSProgressIndicator = {
+        let indicator = NSProgressIndicator(frame: .zero)
+        indicator.translatesAutoresizingMaskIntoConstraints = false
+        indicator.style = .spinning
+        return indicator
+    }()
+
+    private lazy var cancelButton: NSButton = {
+        let button = NSButton(frame: .zero)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.title = "Cancel"
+        button.target = self
+        button.action = #selector(cancelAction)
+        button.bezelStyle = .rounded
+        button.isHidden = true
+        return button
+    }()
+
     private var cancelHandler: (() -> Void)?
+    private var didConfigureUI = false
 
     init() {
-        let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 560, height: 340),
-            styleMask: [.titled, .closable, .miniaturizable],
-            backing: .buffered,
-            defer: false
-        )
-        window.title = "TotalSegmentator Progress"
-        window.isReleasedWhenClosed = false
-        super.init(window: window)
-        configureContent()
+        super.init(window: nil)
     }
 
     required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+        super.init(coder: coder)
     }
 
     func start() {
-        progressIndicator.startAnimation(nil)
-        append("Starting TotalSegmentator…")
+        performOnMain { controller in
+            controller.progressIndicator.startAnimation(nil)
+            controller.append("Starting TotalSegmentator…")
+        }
     }
 
     func append(_ message: String) {
-        guard let textStorage = textView.textStorage else { return }
-        let normalized = message.hasSuffix("\n") ? message : message + "\n"
-        let attributed = NSAttributedString(string: normalized)
-        textStorage.append(attributed)
-        textView.scrollToEndOfDocument(nil)
+        performOnMain { controller in
+            guard let textStorage = controller.textView.textStorage else { return }
+            let normalized = message.hasSuffix("\n") ? message : message + "\n"
+            let attributed = NSAttributedString(string: normalized)
+            textStorage.append(attributed)
+            controller.textView.scrollToEndOfDocument(nil)
+        }
     }
 
     func setCancelHandler(_ handler: @escaping () -> Void) {
-        cancelHandler = handler
-        cancelButton.isHidden = false
-        cancelButton.isEnabled = true
+        performOnMain { controller in
+            controller.cancelHandler = handler
+            controller.cancelButton.isHidden = false
+            controller.cancelButton.isEnabled = true
+        }
     }
 
     func markProcessFinished() {
-        progressIndicator.stopAnimation(nil)
-        cancelButton.isEnabled = false
-        cancelHandler = nil
+        performOnMain { controller in
+            controller.progressIndicator.stopAnimation(nil)
+            controller.cancelButton.isEnabled = false
+            controller.cancelHandler = nil
+        }
     }
 
     func close(after delay: TimeInterval) {
@@ -60,33 +84,56 @@ final class SegmentationProgressWindowController: NSWindowController {
     }
 
     override func close() {
+        if !Thread.isMainThread {
+            DispatchQueue.main.async { [weak self] in
+                self?.close()
+            }
+            return
+        }
+
         window?.orderOut(nil)
         super.close()
     }
 
-    private func configureContent() {
-        guard let contentView = window?.contentView else { return }
+    override func showWindow(_ sender: Any?) {
+        if !Thread.isMainThread {
+            DispatchQueue.main.async { [weak self] in
+                self?.showWindow(sender)
+            }
+            return
+        }
 
-        textView.isEditable = false
-        textView.isSelectable = true
-        textView.font = NSFont.monospacedSystemFont(ofSize: 12, weight: .regular)
-        textView.textContainerInset = NSSize(width: 4, height: 8)
+        ensureWindow()
+        super.showWindow(sender)
+    }
 
-        let scrollView = NSScrollView(frame: .zero)
+    private func ensureWindow() {
+        precondition(Thread.isMainThread, "UI updates must occur on the main thread.")
+
+        if window == nil {
+            let window = NSWindow(
+                contentRect: NSRect(x: 0, y: 0, width: 560, height: 340),
+                styleMask: [.titled, .closable, .miniaturizable],
+                backing: .buffered,
+                defer: false
+            )
+            window.title = "TotalSegmentator Progress"
+            window.isReleasedWhenClosed = false
+            self.window = window
+        }
+
+        configureContentIfNeeded()
+    }
+
+    private func configureContentIfNeeded() {
+        guard let contentView = window?.contentView, !didConfigureUI else { return }
+        didConfigureUI = true
+
+        let scrollView = NSScrollView()
         scrollView.translatesAutoresizingMaskIntoConstraints = false
         scrollView.hasVerticalScroller = true
         scrollView.documentView = textView
         scrollView.borderType = .bezelBorder
-
-        progressIndicator.translatesAutoresizingMaskIntoConstraints = false
-        progressIndicator.style = .spinning
-
-        cancelButton.translatesAutoresizingMaskIntoConstraints = false
-        cancelButton.title = "Cancel"
-        cancelButton.target = self
-        cancelButton.action = #selector(cancelAction)
-        cancelButton.bezelStyle = .rounded
-        cancelButton.isHidden = true
 
         contentView.addSubview(scrollView)
         contentView.addSubview(progressIndicator)
@@ -113,5 +160,19 @@ final class SegmentationProgressWindowController: NSWindowController {
         cancelHandler = nil
         handler?()
         append("Cancellation requested…")
+    }
+
+    private func performOnMain(_ block: @escaping (SegmentationProgressWindowController) -> Void) {
+        let work = { [weak self] in
+            guard let self = self else { return }
+            self.ensureWindow()
+            block(self)
+        }
+
+        if Thread.isMainThread {
+            work()
+        } else {
+            DispatchQueue.main.async(execute: work)
+        }
     }
 }

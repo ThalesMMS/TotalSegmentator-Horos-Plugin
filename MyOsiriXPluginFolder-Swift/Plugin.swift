@@ -149,6 +149,7 @@ private struct SegmentationAuditEntry: Codable {
     let convertedFromNifti: Bool
 }
 
+@objc(TotalSegmentatorHorosPlugin)
 class TotalSegmentatorHorosPlugin: PluginFilter {
     @IBOutlet private weak var settingsWindow: NSWindow!
     @IBOutlet private weak var executablePathField: NSTextField!
@@ -995,24 +996,27 @@ print("__RESULT__" + json.dumps({"path": result}))
             return nil
         }
 
-        guard result.terminationStatus == 0,
-              let dictionary = extractResultDictionary(from: result.stdout),
-              let path = dictionary["path"] as? String,
-              !path.isEmpty else {
+        if result.terminationStatus == 0,
+           let dictionary = extractResultDictionary(from: result.stdout),
+           let path = dictionary["path"] as? String,
+           !path.isEmpty {
             DispatchQueue.main.async {
-                self.presentAlert(
-                    title: "TotalSegmentator",
-                    message: "dcm2niix could not be downloaded automatically. Please install it manually and ensure it is on the PATH."
-                )
+                controller.append("dcm2niix available at: \(path)")
             }
-            return nil
+            return path
+        }
+
+        if let fallbackPath = attemptLocalDcm2NiixBootstrap(progressController: controller) {
+            return fallbackPath
         }
 
         DispatchQueue.main.async {
-            controller.append("dcm2niix available at: \(path)")
+            self.presentAlert(
+                title: "TotalSegmentator",
+                message: "dcm2niix could not be downloaded automatically. Please install it manually and ensure it is on the PATH."
+            )
         }
-
-        return path
+        return nil
     }
 
     private func extractResultDictionary(from data: Data) -> [String: Any]? {
@@ -1028,8 +1032,133 @@ print("__RESULT__" + json.dumps({"path": result}))
                 }
             }
         }
-
         return nil
+    }
+
+    private func pluginSupportDirectory() -> URL? {
+        guard let supportDir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else {
+            return nil
+        }
+        let directory = supportDir.appendingPathComponent("TotalSegmentatorHorosPlugin", isDirectory: true)
+        if !FileManager.default.fileExists(atPath: directory.path) {
+            do {
+                try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+            } catch {
+                logToConsole("Failed to create plugin support directory: \(error.localizedDescription)")
+                return nil
+            }
+        }
+        return directory
+    }
+
+    private func attemptLocalDcm2NiixBootstrap(progressController: SegmentationProgressWindowController?) -> String? {
+        guard let supportDirectory = pluginSupportDirectory() else {
+            return nil
+        }
+
+        let binaryURL = supportDirectory.appendingPathComponent("dcm2niix", isDirectory: false)
+
+        if FileManager.default.isExecutableFile(atPath: binaryURL.path) {
+            progressController?.append("Using existing dcm2niix at \(binaryURL.path)")
+            return binaryURL.path
+        }
+
+        progressController?.append("Attempting local bootstrap of dcm2niix…")
+
+        let archiveURL = supportDirectory.appendingPathComponent("dcm2niix_macos.zip", isDirectory: false)
+        try? FileManager.default.removeItem(at: archiveURL)
+
+        guard let downloadURL = URL(string: "https://github.com/rordenlab/dcm2niix/releases/latest/download/dcm2niix_macos.zip") else {
+            progressController?.append("Unable to resolve dcm2niix download URL.")
+            return nil
+        }
+
+        let semaphore = DispatchSemaphore(value: 0)
+        var downloadError: Error?
+
+        let task = URLSession.shared.downloadTask(with: downloadURL) { location, _, error in
+            defer { semaphore.signal() }
+            if let error = error {
+                downloadError = error
+                return
+            }
+
+            guard let location = location else {
+                downloadError = NSError(domain: "TotalSegmentatorHorosPlugin", code: -1, userInfo: [NSLocalizedDescriptionKey: "Download location missing"])
+                return
+            }
+
+            do {
+                try FileManager.default.moveItem(at: location, to: archiveURL)
+            } catch {
+                downloadError = error
+            }
+        }
+
+        task.resume()
+
+        if semaphore.wait(timeout: .now() + 120) == .timedOut {
+            task.cancel()
+            progressController?.append("Timeout while downloading dcm2niix archive.")
+            return nil
+        }
+
+        if let error = downloadError {
+            progressController?.append("Failed to download dcm2niix: \(error.localizedDescription)")
+            return nil
+        }
+
+        let unzip = Process()
+        unzip.executableURL = URL(fileURLWithPath: "/usr/bin/unzip")
+        unzip.arguments = ["-o", archiveURL.path, "-d", supportDirectory.path]
+
+        do {
+            try unzip.run()
+            unzip.waitUntilExit()
+        } catch {
+            progressController?.append("Unable to extract dcm2niix: \(error.localizedDescription)")
+            return nil
+        }
+
+        guard unzip.terminationStatus == 0 else {
+            progressController?.append("Extraction of dcm2niix failed with status \(unzip.terminationStatus).")
+            return nil
+        }
+
+        let enumerator = FileManager.default.enumerator(at: supportDirectory, includingPropertiesForKeys: nil)
+        var locatedBinary: URL?
+
+        while let item = enumerator?.nextObject() as? URL {
+            if item.lastPathComponent == "dcm2niix" {
+                locatedBinary = item
+                break
+            }
+        }
+
+        guard let resolvedBinary = locatedBinary else {
+            progressController?.append("dcm2niix binary not found after extraction.")
+            return nil
+        }
+
+        do {
+            let attributes = try FileManager.default.attributesOfItem(atPath: resolvedBinary.path)
+            if let permissions = attributes[.posixPermissions] as? NSNumber {
+                let current = permissions.uint16Value
+                if current & 0o111 == 0 {
+                    try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: resolvedBinary.path)
+                }
+            } else {
+                try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: resolvedBinary.path)
+            }
+        } catch {
+            progressController?.append("Failed to update dcm2niix permissions: \(error.localizedDescription)")
+            return nil
+        }
+
+        try? FileManager.default.removeItem(at: archiveURL)
+
+        progressController?.append("dcm2niix downloaded to \(resolvedBinary.path)")
+        return resolvedBinary.path
     }
 
     private func pipInstallInstruction(for module: String, using resolution: ExecutableResolution) -> String {
