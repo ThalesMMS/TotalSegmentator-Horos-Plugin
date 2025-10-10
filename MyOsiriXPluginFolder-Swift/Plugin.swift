@@ -520,7 +520,13 @@ else:
             return controller
         }
 
-        let controller = SegmentationProgressWindowController()
+        let controller: SegmentationProgressWindowController = {
+            if Thread.isMainThread {
+                return SegmentationProgressWindowController()
+            } else {
+                return DispatchQueue.main.sync { SegmentationProgressWindowController() }
+            }
+        }()
         setupProgressWindowController = controller
 
         DispatchQueue.main.async {
