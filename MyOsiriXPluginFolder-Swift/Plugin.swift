@@ -3,6 +3,13 @@ import CoreData
 
 private typealias ExecutableResolution = (executableURL: URL, leadingArguments: [String], environment: [String: String]?)
 
+private struct ProcessExecutionResult {
+    let terminationStatus: Int32
+    let stdout: Data
+    let stderr: Data
+    let error: Error?
+}
+
 private enum SegmentationOutputType: Equatable {
     case dicom
     case nifti
@@ -135,6 +142,7 @@ class TotalSegmentatorHorosPlugin: PluginFilter {
 
     private let preferences = SegmentationPreferences()
     private var progressWindowController: SegmentationProgressWindowController?
+    private var setupProgressWindowController: SegmentationProgressWindowController?
     private let auditQueue = DispatchQueue(label: "org.totalsegmentator.horos.audit", qos: .utility)
     private var classSelectionController: ClassSelectionWindowController?
     private var availableClassOptionsCache: [String: [String]] = [:]
@@ -447,12 +455,512 @@ else:
         return normalized.hasPrefix("total")
     }
 
+    private func performInitialSetupIfNeeded() {
+        autoreleasepool {
+            var preferencesState = preferences.effectivePreferences()
+            var updatedPreferences = preferencesState
+
+            guard var executableResolution = resolvePythonInterpreter(using: preferencesState) else {
+                presentEnvironmentSetupFailureInstructions()
+                return
+            }
+
+            if !pythonModuleAvailable("totalsegmentator", using: executableResolution) {
+                logToConsole("TotalSegmentator module not found. Attempting to create a managed virtual environment.")
+
+                if let managed = bootstrapManagedPythonEnvironment(baseResolution: executableResolution) {
+                    executableResolution = managed.resolution
+                    updatedPreferences.executablePath = managed.pythonPath
+                    preferences.store(updatedPreferences)
+                    preferencesState = updatedPreferences
+
+                    DispatchQueue.main.async { [weak self] in
+                        self?.executablePathField?.stringValue = managed.pythonPath
+                    }
+                } else {
+                    finishSetupProgress(with: nil)
+                    presentEnvironmentSetupFailureInstructions()
+                    return
+                }
+            }
+
+            guard pythonModuleAvailable("totalsegmentator", using: executableResolution) else {
+                finishSetupProgress(with: nil)
+                presentEnvironmentSetupFailureInstructions()
+                return
+            }
+
+            let setupSucceeded = ensureTotalSegmentatorSetup(using: executableResolution)
+            if !setupSucceeded {
+                finishSetupProgress(with: "TotalSegmentator setup encountered issues. Please review the log output.")
+                return
+            }
+
+            guard let dcm2niixPath = ensureDcm2Niix(using: executableResolution) else {
+                finishSetupProgress(with: "Unable to prepare dcm2niix. Please review the displayed instructions.")
+                return
+            }
+
+            if updatedPreferences.dcm2niixPath != dcm2niixPath {
+                updatedPreferences.dcm2niixPath = dcm2niixPath
+                preferences.store(updatedPreferences)
+            }
+
+            finishSetupProgress(with: "Initial setup complete.")
+        }
+    }
+
+    private func presentSetupProgressWindowIfNeeded(initialMessage: String? = nil) -> SegmentationProgressWindowController {
+        if let controller = setupProgressWindowController {
+            if let message = initialMessage {
+                DispatchQueue.main.async {
+                    controller.append(message)
+                }
+            }
+            return controller
+        }
+
+        let controller = SegmentationProgressWindowController()
+        setupProgressWindowController = controller
+
+        DispatchQueue.main.async {
+            controller.showWindow(nil)
+            controller.start()
+            if let message = initialMessage {
+                controller.append(message)
+            } else {
+                controller.append("Preparing TotalSegmentator environment…")
+            }
+        }
+
+        return controller
+    }
+
+    private func finishSetupProgress(with message: String?) {
+        guard let controller = setupProgressWindowController else { return }
+
+        DispatchQueue.main.async {
+            if let message = message, !message.isEmpty {
+                controller.append(message)
+            }
+            controller.markProcessFinished()
+            controller.close(after: 2.0)
+        }
+
+        setupProgressWindowController = nil
+    }
+
+    private func pythonModuleAvailable(_ moduleName: String, using resolution: ExecutableResolution) -> Bool {
+        let script = """
+import importlib.util
+import sys
+
+module = sys.argv[1]
+spec = importlib.util.find_spec(module)
+sys.exit(0 if spec is not None else 1)
+"""
+
+        let result = runPythonProcess(
+            using: resolution,
+            arguments: ["-c", script, moduleName],
+            progressController: nil
+        )
+
+        if let error = result.error {
+            logToConsole("Python execution failed while probing module '\(moduleName)': \(error.localizedDescription)")
+            return false
+        }
+
+        return result.terminationStatus == 0
+    }
+
+    private func runPythonProcess(
+        using resolution: ExecutableResolution,
+        arguments: [String],
+        environment customEnvironment: [String: String]? = nil,
+        progressController: SegmentationProgressWindowController?
+    ) -> ProcessExecutionResult {
+        let process = Process()
+        process.executableURL = resolution.executableURL
+        process.arguments = resolution.leadingArguments + arguments
+
+        var environment = ProcessInfo.processInfo.environment
+        environment["PYTHONUNBUFFERED"] = "1"
+
+        if let baseEnvironment = resolution.environment {
+            environment.merge(baseEnvironment) { _, new in new }
+        }
+
+        if let custom = customEnvironment {
+            environment.merge(custom) { _, new in new }
+        }
+
+        process.environment = environment
+
+        let stdoutPipe = Pipe()
+        let stderrPipe = Pipe()
+        process.standardOutput = stdoutPipe
+        process.standardError = stderrPipe
+
+        var capturedStdout = Data()
+        var capturedStderr = Data()
+
+        let stdoutHandle = stdoutPipe.fileHandleForReading
+        let stderrHandle = stderrPipe.fileHandleForReading
+
+        stdoutHandle.readabilityHandler = { [weak self, weak progressController] handle in
+            let data = handle.availableData
+            guard !data.isEmpty else { return }
+            capturedStdout.append(data)
+
+            if let message = String(data: data, encoding: .utf8), !message.isEmpty {
+                DispatchQueue.main.async {
+                    progressController?.append(message)
+                    self?.logToConsole(message)
+                }
+            }
+        }
+
+        stderrHandle.readabilityHandler = { [weak self, weak progressController] handle in
+            let data = handle.availableData
+            guard !data.isEmpty else { return }
+            capturedStderr.append(data)
+
+            if let message = String(data: data, encoding: .utf8), !message.isEmpty {
+                DispatchQueue.main.async {
+                    progressController?.append(message)
+                    self?.logToConsole(message)
+                }
+            }
+        }
+
+        var launchError: Error?
+
+        do {
+            try process.run()
+        } catch {
+            launchError = error
+        }
+
+        if let error = launchError {
+            stdoutHandle.readabilityHandler = nil
+            stderrHandle.readabilityHandler = nil
+            return ProcessExecutionResult(terminationStatus: -1, stdout: capturedStdout, stderr: capturedStderr, error: error)
+        }
+
+        process.waitUntilExit()
+
+        stdoutHandle.readabilityHandler = nil
+        stderrHandle.readabilityHandler = nil
+
+        capturedStdout.append(stdoutHandle.readDataToEndOfFile())
+        capturedStderr.append(stderrHandle.readDataToEndOfFile())
+
+        return ProcessExecutionResult(
+            terminationStatus: process.terminationStatus,
+            stdout: capturedStdout,
+            stderr: capturedStderr,
+            error: nil
+        )
+    }
+
+    private func bootstrapManagedPythonEnvironment(
+        baseResolution: ExecutableResolution
+    ) -> (resolution: ExecutableResolution, pythonPath: String)? {
+        guard let environmentDirectory = managedEnvironmentDirectory() else {
+            logToConsole("Failed to resolve a location for the managed Python environment.")
+            return nil
+        }
+
+        let binDirectory = environmentDirectory.appendingPathComponent("bin", isDirectory: true)
+        let python3URL = binDirectory.appendingPathComponent("python3", isDirectory: false)
+        let pythonURL = binDirectory.appendingPathComponent("python", isDirectory: false)
+        let fileManager = FileManager.default
+
+        if !fileManager.fileExists(atPath: python3URL.path) && !fileManager.fileExists(atPath: pythonURL.path) {
+            let controller = presentSetupProgressWindowIfNeeded(initialMessage: "Creating managed Python environment…")
+            let result = runPythonProcess(
+                using: baseResolution,
+                arguments: ["-m", "venv", environmentDirectory.path],
+                progressController: controller
+            )
+
+            if result.terminationStatus != 0 || result.error != nil {
+                DispatchQueue.main.async {
+                    controller.append("Failed to create the virtual environment. Please review the console output.")
+                }
+                logToConsole("Failed to create virtual environment: status=\(result.terminationStatus)")
+                return nil
+            }
+        }
+
+        let pythonBinary: URL
+        if fileManager.isExecutableFile(atPath: python3URL.path) {
+            pythonBinary = python3URL
+        } else if fileManager.isExecutableFile(atPath: pythonURL.path) {
+            pythonBinary = pythonURL
+        } else {
+            logToConsole("Managed Python environment exists but no executable interpreter was found.")
+            return nil
+        }
+
+        var environment = baseResolution.environment ?? [:]
+        var existingPath = environment["PATH"] ?? ProcessInfo.processInfo.environment["PATH"] ?? ""
+        let binPath = binDirectory.path
+        let pathComponents = existingPath.split(separator: ":").map(String.init)
+        if !pathComponents.contains(binPath) {
+            existingPath = binPath + (existingPath.isEmpty ? "" : ":" + existingPath)
+        }
+        environment["PATH"] = existingPath
+        environment["VIRTUAL_ENV"] = environmentDirectory.path
+
+        let managedResolution: ExecutableResolution = (pythonBinary, [], environment)
+
+        if !pythonModuleAvailable("totalsegmentator", using: managedResolution) {
+            let controller = presentSetupProgressWindowIfNeeded(initialMessage: "Installing TotalSegmentator into managed environment…")
+
+            _ = runPythonProcess(
+                using: managedResolution,
+                arguments: ["-m", "pip", "install", "--upgrade", "pip"],
+                progressController: controller
+            )
+
+            let installResult = runPythonProcess(
+                using: managedResolution,
+                arguments: ["-m", "pip", "install", "--upgrade", "TotalSegmentator"],
+                progressController: controller
+            )
+
+            if installResult.terminationStatus != 0 || installResult.error != nil {
+                logToConsole("Failed to install TotalSegmentator into managed environment: status=\(installResult.terminationStatus)")
+                return nil
+            }
+        }
+
+        guard pythonModuleAvailable("totalsegmentator", using: managedResolution) else {
+            logToConsole("Managed environment was created but TotalSegmentator is still unavailable.")
+            return nil
+        }
+
+        return (managedResolution, pythonBinary.path)
+    }
+
+    private func managedEnvironmentDirectory() -> URL? {
+        let fileManager = FileManager.default
+        guard let supportDirectory = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else {
+            return nil
+        }
+
+        let pluginDirectory = supportDirectory.appendingPathComponent("TotalSegmentatorHorosPlugin", isDirectory: true)
+        let environmentDirectory = pluginDirectory.appendingPathComponent("PythonEnvironment", isDirectory: true)
+
+        do {
+            try fileManager.createDirectory(at: environmentDirectory, withIntermediateDirectories: true)
+        } catch {
+            logToConsole("Failed to create managed environment directory: \(error.localizedDescription)")
+            return nil
+        }
+
+        return environmentDirectory
+    }
+
+    private func ensureTotalSegmentatorSetup(using resolution: ExecutableResolution) -> Bool {
+        let controller = presentSetupProgressWindowIfNeeded(initialMessage: "Ensuring TotalSegmentator configuration and weights are available…")
+
+        let script = """
+import json
+from totalsegmentator.python_api import setup_totalseg, setup_nnunet
+
+setup_totalseg()
+setup_nnunet()
+print("__RESULT__" + json.dumps({"status": "ok"}))
+"""
+
+        let result = runPythonProcess(
+            using: resolution,
+            arguments: ["-c", script],
+            progressController: controller
+        )
+
+        if let error = result.error {
+            logToConsole("Failed to execute TotalSegmentator setup: \(error.localizedDescription)")
+            return false
+        }
+
+        guard result.terminationStatus == 0 else {
+            logToConsole("TotalSegmentator setup script exited with status \(result.terminationStatus)")
+            return false
+        }
+
+        if let dictionary = extractResultDictionary(from: result.stdout), dictionary["status"] as? String == "ok" {
+            DispatchQueue.main.async {
+                controller.append("TotalSegmentator setup finished successfully.")
+            }
+        } else {
+            DispatchQueue.main.async {
+                controller.append("TotalSegmentator setup finished.")
+            }
+        }
+
+        return true
+    }
+
+    private func ensureDcm2Niix(using resolution: ExecutableResolution) -> String? {
+        let controller = presentSetupProgressWindowIfNeeded(initialMessage: "Checking for dcm2niix availability…")
+
+        let script = """
+import json
+import platform
+import shutil
+import sys
+
+from pathlib import Path
+
+from totalsegmentator.dicom_io import download_dcm2niix
+from totalsegmentator.config import get_weights_dir
+
+
+def locate():
+    path = shutil.which("dcm2niix")
+    if path:
+        return path
+
+    weights = Path(get_weights_dir())
+    if platform.system().lower().startswith("win"):
+        candidate = weights / "dcm2niix.exe"
+    else:
+        candidate = weights / "dcm2niix"
+
+    if candidate.exists():
+        return str(candidate)
+
+    return None
+
+
+result = locate()
+if result is None:
+    download_dcm2niix()
+    result = locate()
+
+if result is None:
+    print("__RESULT__" + json.dumps({"path": None}))
+    sys.exit(1)
+
+print("__RESULT__" + json.dumps({"path": result}))
+"""
+
+        let result = runPythonProcess(
+            using: resolution,
+            arguments: ["-c", script],
+            progressController: controller
+        )
+
+        if let error = result.error {
+            logToConsole("Failed to verify dcm2niix availability: \(error.localizedDescription)")
+            DispatchQueue.main.async {
+                self.presentAlert(
+                    title: "TotalSegmentator",
+                    message: "Unable to verify or download dcm2niix. Please install it manually and update your PATH."
+                )
+            }
+            return nil
+        }
+
+        guard result.terminationStatus == 0,
+              let dictionary = extractResultDictionary(from: result.stdout),
+              let path = dictionary["path"] as? String,
+              !path.isEmpty else {
+            DispatchQueue.main.async {
+                self.presentAlert(
+                    title: "TotalSegmentator",
+                    message: "dcm2niix could not be downloaded automatically. Please install it manually and ensure it is on the PATH."
+                )
+            }
+            return nil
+        }
+
+        DispatchQueue.main.async {
+            controller.append("dcm2niix available at: \(path)")
+        }
+
+        return path
+    }
+
+    private func extractResultDictionary(from data: Data) -> [String: Any]? {
+        guard let text = String(data: data, encoding: .utf8) else { return nil }
+
+        for line in text.split(whereSeparator: { $0.isNewline }) {
+            if line.hasPrefix("__RESULT__") {
+                let payloadString = String(line.dropFirst("__RESULT__".count))
+                if let payloadData = payloadString.data(using: .utf8),
+                   let object = try? JSONSerialization.jsonObject(with: payloadData, options: []),
+                   let dictionary = object as? [String: Any] {
+                    return dictionary
+                }
+            }
+        }
+
+        return nil
+    }
+
+    private func pipInstallInstruction(for module: String, using resolution: ExecutableResolution) -> String {
+        let components = [resolution.executableURL.path] + resolution.leadingArguments + ["-m", "pip", "install", module]
+        return components.map { component -> String in
+            if component.contains(" ") {
+                return "\"\(component)\""
+            }
+            return component
+        }.joined(separator: " ")
+    }
+
+    private func presentEnvironmentSetupFailureInstructions() {
+        let message = """
+Unable to prepare a Python environment with TotalSegmentator installed.
+
+Please install TotalSegmentator manually, for example:
+  python3 -m venv ~/totalseg-env
+  ~/totalseg-env/bin/python3 -m pip install --upgrade pip TotalSegmentator
+
+Then update the plugin settings to point to the Python interpreter in that environment.
+"""
+
+        DispatchQueue.main.async {
+            self.presentAlert(title: "TotalSegmentator", message: message)
+        }
+    }
+
+    private func ensureRtUtilsAvailable(using resolution: ExecutableResolution) -> Bool {
+        if pythonModuleAvailable("rt_utils", using: resolution) {
+            return true
+        }
+
+        logToConsole("The configured Python environment is missing the optional 'rt_utils' package.")
+        let command = pipInstallInstruction(for: "rt_utils", using: resolution)
+        let message = """
+The optional 'rt_utils' package is required to export DICOM RT-Struct files.
+
+Install it by running:
+  \(command)
+
+After installing the package, re-run the segmentation.
+"""
+
+        DispatchQueue.main.async {
+            self.presentAlert(title: "TotalSegmentator", message: message)
+        }
+
+        return false
+    }
+
     override func initPlugin() {
         let bundle = Bundle(identifier: "com.totalsegmentator.horosplugin")
         bundle?.loadNibNamed("Settings", owner: self, topLevelObjects: nil)
         settingsWindow?.delegate = self
         configureSettingsInterfaceIfNeeded()
         NSLog("TotalSegmentatorHorosPlugin loaded and ready.")
+        DispatchQueue.global(qos: .utility).async { [weak self] in
+            self?.performInitialSetupIfNeeded()
+        }
     }
 
     private func startSegmentationFlow() {
@@ -520,6 +1028,12 @@ else:
             logToConsole("Overriding requested output type '\(outputDetection.type.description)' with 'dicom' to ensure RT Struct overlays are generated.")
         }
 
+        if effectiveOutputType == .dicom {
+            guard ensureRtUtilsAvailable(using: executableResolution) else {
+                return
+            }
+        }
+
         var totalSegmentatorArguments: [String] = []
         if let task = currentPreferences.task, !task.isEmpty {
             totalSegmentatorArguments.append(contentsOf: ["--task", task])
@@ -584,6 +1098,17 @@ else:
         environment["PYTHONUNBUFFERED"] = "1"
         if let customEnvironment = executableResolution.environment {
             environment.merge(customEnvironment) { _, new in new }
+        }
+        if let dcm2niixPath = currentPreferences.dcm2niixPath, !dcm2niixPath.isEmpty {
+            let binaryURL = URL(fileURLWithPath: dcm2niixPath)
+            let directoryPath = binaryURL.deletingLastPathComponent().path
+            var pathVariable = environment["PATH"] ?? ""
+            let existingComponents = pathVariable.split(separator: ":").map(String.init)
+            if !existingComponents.contains(directoryPath) {
+                pathVariable = directoryPath + (pathVariable.isEmpty ? "" : ":" + pathVariable)
+            }
+            environment["PATH"] = pathVariable
+            environment["TOTALSEGMENTATOR_DCM2NIIX"] = dcm2niixPath
         }
         process.environment = environment
 
@@ -1838,6 +2363,7 @@ private extension TotalSegmentatorHorosPlugin {
             var device: String?
             var additionalArguments: String?
             var selectedClassNames: [String]
+            var dcm2niixPath: String?
         }
 
         private enum Keys {
@@ -1847,6 +2373,7 @@ private extension TotalSegmentatorHorosPlugin {
             static let device = "TotalSegmentatorDevice"
             static let additionalArguments = "TotalSegmentatorAdditionalArguments"
             static let selectedClasses = "TotalSegmentatorSelectedClasses"
+            static let dcm2niixPath = "TotalSegmentatorDcm2NiixPath"
         }
 
         private let defaults = UserDefaults.standard
@@ -1858,7 +2385,8 @@ private extension TotalSegmentatorHorosPlugin {
                 useFast: defaults.bool(forKey: Keys.fastMode),
                 device: defaults.string(forKey: Keys.device),
                 additionalArguments: defaults.string(forKey: Keys.additionalArguments),
-                selectedClassNames: defaults.stringArray(forKey: Keys.selectedClasses) ?? []
+                selectedClassNames: defaults.stringArray(forKey: Keys.selectedClasses) ?? [],
+                dcm2niixPath: defaults.string(forKey: Keys.dcm2niixPath)
             )
         }
 
@@ -1869,6 +2397,7 @@ private extension TotalSegmentatorHorosPlugin {
             defaults.setValue(state.device, forKey: Keys.device)
             defaults.setValue(state.additionalArguments, forKey: Keys.additionalArguments)
             defaults.setValue(state.selectedClassNames, forKey: Keys.selectedClasses)
+            defaults.setValue(state.dcm2niixPath, forKey: Keys.dcm2niixPath)
         }
 
         func defaultExecutableURL() throws -> URL {
