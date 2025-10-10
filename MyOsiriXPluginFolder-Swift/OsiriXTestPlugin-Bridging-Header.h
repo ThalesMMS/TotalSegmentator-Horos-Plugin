@@ -4,3 +4,6 @@
 
 #import <OsiriXAPI/PluginFilter.h>
 #import <OsiriXAPI/BrowserController.h>
+#import <OsiriXAPI/DicomDatabase.h>
+#import <OsiriXAPI/ViewerController.h>
+#import <OsiriXAPI/DicomFile.h>

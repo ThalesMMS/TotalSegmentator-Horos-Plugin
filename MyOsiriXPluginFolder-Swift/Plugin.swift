@@ -1,4 +1,105 @@
 import Cocoa
+import CoreData
+
+private typealias ExecutableResolution = (executableURL: URL, leadingArguments: [String], environment: [String: String]?)
+
+private enum SegmentationOutputType: Equatable {
+    case dicom
+    case nifti
+    case other(String?)
+
+    init(argumentValue: String?) {
+        guard let normalized = argumentValue?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased(), !normalized.isEmpty else {
+            self = .dicom
+            return
+        }
+
+        switch normalized {
+        case "dicom":
+            self = .dicom
+        case "nifti", "nifti_gz", "nii", "nii.gz":
+            self = .nifti
+        default:
+            self = .other(argumentValue)
+        }
+    }
+
+    var description: String {
+        switch self {
+        case .dicom:
+            return "dicom"
+        case .nifti:
+            return "nifti"
+        case .other(let value):
+            return value ?? "unknown"
+        }
+    }
+}
+
+private struct ExportedSeries {
+    let managedObject: NSManagedObject
+    let modality: String
+    let exportedDirectory: URL
+    let exportedFiles: [URL]
+    let seriesInstanceUID: String?
+    let studyInstanceUID: String?
+}
+
+private struct ExportResult {
+    let directory: URL
+    let series: [ExportedSeries]
+}
+
+private struct SegmentationImportResult {
+    let addedFilePaths: [String]
+    let rtStructPaths: [String]
+    let importedObjectIDs: [NSManagedObjectID]
+    let outputType: SegmentationOutputType
+}
+
+private enum SegmentationPostProcessingError: LocalizedError {
+    case browserUnavailable
+    case databaseUnavailable
+    case noImportableResults
+    case unsupportedOutputType(String?)
+
+    var errorDescription: String? {
+        switch self {
+        case .browserUnavailable:
+            return "The Horos browser window is not available."
+        case .databaseUnavailable:
+            return "The Horos database is not available."
+        case .noImportableResults:
+            return "No segmentation outputs could be imported into Horos."
+        case .unsupportedOutputType(let value):
+            if let value = value, !value.isEmpty {
+                return "The segmentation output type '\(value)' is not supported by the plugin."
+            }
+            return "The segmentation output type is not supported by the plugin."
+        }
+    }
+}
+
+private struct SegmentationAuditEntry: Codable {
+    struct SeriesInfo: Codable {
+        let seriesInstanceUID: String?
+        let studyInstanceUID: String?
+        let modality: String
+        let exportedFileCount: Int
+    }
+
+    let timestamp: Date
+    let outputDirectory: String
+    let outputType: String
+    let importedFileCount: Int
+    let rtStructCount: Int
+    let task: String?
+    let device: String?
+    let useFast: Bool
+    let additionalArguments: String?
+    let modelVersion: String?
+    let series: [SeriesInfo]
+}
 
 class TotalSegmentatorHorosPlugin: PluginFilter {
     @IBOutlet private weak var settingsWindow: NSWindow!
@@ -15,6 +116,7 @@ class TotalSegmentatorHorosPlugin: PluginFilter {
 
     private let preferences = SegmentationPreferences()
     private var progressWindowController: SegmentationProgressWindowController?
+    private let auditQueue = DispatchQueue(label: "org.totalsegmentator.horos.audit", qos: .utility)
 
     private let taskOptions: [(title: String, value: String?)] = [
         (NSLocalizedString("Automatic (default)", comment: "Default task option"), nil),
@@ -125,9 +227,9 @@ class TotalSegmentatorHorosPlugin: PluginFilter {
             return
         }
 
-        let exportDirectory: URL
+        let exportResult: ExportResult
         do {
-            exportDirectory = try exportCompatibleSeries(from: study)
+            exportResult = try exportCompatibleSeries(from: study)
         } catch {
             presentAlert(title: "TotalSegmentator", message: error.localizedDescription)
             return
@@ -139,7 +241,7 @@ class TotalSegmentatorHorosPlugin: PluginFilter {
         }
 
         DispatchQueue.global(qos: .userInitiated).async {
-            self.runSegmentation(input: exportDirectory, output: outputURL)
+            self.runSegmentation(exportResult: exportResult, output: outputURL)
         }
     }
 
@@ -154,7 +256,7 @@ class TotalSegmentatorHorosPlugin: PluginFilter {
         return panel.runModal() == .OK ? panel.url : nil
     }
 
-    private func runSegmentation(input: URL, output: URL) {
+    private func runSegmentation(exportResult: ExportResult, output: URL) {
         let currentPreferences = preferences.effectivePreferences()
 
         guard let executableResolution = resolveExecutable(using: currentPreferences) else {
@@ -167,9 +269,24 @@ class TotalSegmentatorHorosPlugin: PluginFilter {
             return
         }
 
+        let additionalTokens: [String]
+        if let additional = currentPreferences.additionalArguments,
+           !additional.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            additionalTokens = tokenize(commandLine: additional)
+        } else {
+            additionalTokens = []
+        }
+
+        let outputDetection = detectOutputType(from: additionalTokens)
+        let effectiveOutputType = outputDetection.explicit ? outputDetection.type : .dicom
+
         var arguments: [String] = []
         arguments.append(contentsOf: executableResolution.leadingArguments)
-        arguments.append(contentsOf: ["-i", input.path, "-o", output.path, "--output_type", "dicom"])
+        arguments.append(contentsOf: ["-i", exportResult.directory.path, "-o", output.path])
+
+        if !outputDetection.explicit {
+            arguments.append(contentsOf: ["--output_type", SegmentationOutputType.dicom.description])
+        }
 
         if let task = currentPreferences.task, !task.isEmpty {
             arguments.append(contentsOf: ["--task", task])
@@ -183,9 +300,8 @@ class TotalSegmentatorHorosPlugin: PluginFilter {
             arguments.append(contentsOf: ["--device", device])
         }
 
-        if let additional = currentPreferences.additionalArguments,
-           !additional.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            arguments.append(contentsOf: tokenize(commandLine: additional))
+        if !additionalTokens.isEmpty {
+            arguments.append(contentsOf: additionalTokens)
         }
 
         let process = Process()
@@ -261,28 +377,55 @@ class TotalSegmentatorHorosPlugin: PluginFilter {
         let combinedStandardOutput = String(data: stdoutBuffer, encoding: .utf8) ?? ""
         let combinedOutput = combinedStandardOutput + combinedErrorOutput
 
+        let postProcessingResult: Result<SegmentationImportResult, Error>
+
+        if process.terminationStatus == 0 {
+            do {
+                try self.validateSegmentationOutput(at: output)
+                let importResult = try self.integrateSegmentationOutput(
+                    at: output,
+                    outputType: effectiveOutputType,
+                    exportContext: exportResult,
+                    preferences: currentPreferences,
+                    executable: executableResolution,
+                    progressController: progressController
+                )
+                postProcessingResult = .success(importResult)
+            } catch {
+                postProcessingResult = .failure(error)
+            }
+        } else {
+            postProcessingResult = .failure(
+                NSError(
+                    domain: "org.totalsegmentator.plugin",
+                    code: Int(process.terminationStatus),
+                    userInfo: [NSLocalizedDescriptionKey: self.translateErrorOutput(combinedOutput, status: process.terminationStatus)]
+                )
+            )
+        }
+
         DispatchQueue.main.async {
             progressController.markProcessFinished()
 
-            if process.terminationStatus == 0 {
-                do {
-                    try self.validateSegmentationOutput(at: output)
-                    progressController.append("Segmentation finished successfully.")
-                    progressController.close(after: 0.5)
-                    self.presentAlert(
-                        title: "TotalSegmentator",
-                        message: "Segmentation finished successfully."
-                    )
-                } catch {
-                    progressController.append(error.localizedDescription)
-                    progressController.close(after: 0.5)
-                    self.presentAlert(
-                        title: "TotalSegmentator",
-                        message: error.localizedDescription
-                    )
+            switch postProcessingResult {
+            case .success(let importResult):
+                progressController.append("Segmentation finished successfully.")
+                progressController.append("Imported \(importResult.addedFilePaths.count) file(s) into Horos.")
+                if !importResult.rtStructPaths.isEmpty {
+                    progressController.append("Detected \(importResult.rtStructPaths.count) RT Struct file(s).")
                 }
-            } else {
-                let message = self.translateErrorOutput(combinedOutput, status: process.terminationStatus)
+                progressController.close(after: 0.5)
+                self.presentAlert(
+                    title: "TotalSegmentator",
+                    message: "Segmentation finished successfully."
+                )
+            case .failure(let error):
+                let message: String
+                if (error as NSError).domain == "org.totalsegmentator.plugin" {
+                    message = error.localizedDescription
+                } else {
+                    message = error.localizedDescription
+                }
                 progressController.append(message)
                 progressController.close(after: 0.5)
                 self.presentAlert(title: "TotalSegmentator", message: message)
@@ -314,7 +457,7 @@ class TotalSegmentatorHorosPlugin: PluginFilter {
         return browser.value(forKey: "selectedStudy") as? NSObject
     }
 
-    private func exportCompatibleSeries(from study: NSObject) throws -> URL {
+    private func exportCompatibleSeries(from study: NSObject) throws -> ExportResult {
         enum ExportError: LocalizedError {
             case noSeries
             case noCompatibleSeries
@@ -376,6 +519,7 @@ class TotalSegmentatorHorosPlugin: PluginFilter {
         let exportDirectory = try makeExportDirectory()
 
         var exportedFiles = 0
+        var exportedSeries: [ExportedSeries] = []
 
         do {
             for entry in compatibleSeries {
@@ -385,6 +529,8 @@ class TotalSegmentatorHorosPlugin: PluginFilter {
 
                 let seriesDirectory = exportDirectory.appendingPathComponent(seriesIdentifier, isDirectory: true)
                 try FileManager.default.createDirectory(at: seriesDirectory, withIntermediateDirectories: true)
+
+                var copiedFiles: [URL] = []
 
                 for path in entry.paths {
                     let sourceURL = URL(fileURLWithPath: path)
@@ -396,6 +542,28 @@ class TotalSegmentatorHorosPlugin: PluginFilter {
 
                     try FileManager.default.copyItem(at: sourceURL, to: destinationURL)
                     exportedFiles += 1
+                    copiedFiles.append(destinationURL)
+                }
+
+                if let managedSeries = entry.series as? NSManagedObject {
+                    let seriesUID = managedSeries.value(forKey: "seriesInstanceUID") as? String
+                    let studyUID: String? = {
+                        if let studyObject = managedSeries.value(forKey: "study") as? NSManagedObject,
+                           let uid = studyObject.value(forKey: "studyInstanceUID") as? String {
+                            return uid
+                        }
+                        return managedSeries.value(forKey: "studyInstanceUID") as? String
+                    }()
+
+                    let seriesInfo = ExportedSeries(
+                        managedObject: managedSeries,
+                        modality: entry.modality,
+                        exportedDirectory: seriesDirectory,
+                        exportedFiles: copiedFiles,
+                        seriesInstanceUID: seriesUID,
+                        studyInstanceUID: studyUID
+                    )
+                    exportedSeries.append(seriesInfo)
                 }
             }
         } catch {
@@ -406,7 +574,11 @@ class TotalSegmentatorHorosPlugin: PluginFilter {
             throw ExportError.noCompatibleSeries
         }
 
-        return exportDirectory
+        if exportedSeries.isEmpty {
+            throw ExportError.noCompatibleSeries
+        }
+
+        return ExportResult(directory: exportDirectory, series: exportedSeries)
     }
 
     private func makeExportDirectory() throws -> URL {
@@ -608,6 +780,384 @@ class TotalSegmentatorHorosPlugin: PluginFilter {
         }
 
         return arguments
+    }
+
+    private func detectOutputType(from tokens: [String]) -> (type: SegmentationOutputType, explicit: Bool) {
+        var detectedType: SegmentationOutputType = .dicom
+        var explicit = false
+
+        for (index, token) in tokens.enumerated() {
+            if token == "--output_type" {
+                explicit = true
+                let value = tokens.indices.contains(index + 1) ? tokens[index + 1] : nil
+                detectedType = SegmentationOutputType(argumentValue: value)
+            } else if token.hasPrefix("--output_type=") {
+                explicit = true
+                let value = String(token.dropFirst("--output_type=".count))
+                detectedType = SegmentationOutputType(argumentValue: value)
+            }
+        }
+
+        return (detectedType, explicit)
+    }
+
+    private func integrateSegmentationOutput(
+        at url: URL,
+        outputType: SegmentationOutputType,
+        exportContext: ExportResult,
+        preferences: SegmentationPreferences.State,
+        executable: ExecutableResolution,
+        progressController: SegmentationProgressWindowController?
+    ) throws -> SegmentationImportResult {
+        let importResult: SegmentationImportResult
+
+        switch outputType {
+        case .dicom:
+            importResult = try importDicomOutputs(from: url)
+        case .nifti:
+            importResult = try importNiftiOutputs(from: url)
+        case .other(let value):
+            throw SegmentationPostProcessingError.unsupportedOutputType(value)
+        }
+
+        updateVisualization(with: importResult, exportContext: exportContext, progressController: progressController)
+        persistAuditMetadata(
+            for: importResult,
+            exportContext: exportContext,
+            outputDirectory: url,
+            preferences: preferences,
+            outputType: outputType,
+            executable: executable
+        )
+
+        return importResult
+    }
+
+    private func importDicomOutputs(from directory: URL) throws -> SegmentationImportResult {
+        let fileManager = FileManager.default
+        let enumerator = fileManager.enumerator(
+            at: directory,
+            includingPropertiesForKeys: [.isRegularFileKey],
+            options: [.skipsHiddenFiles]
+        )
+
+        var dicomPaths: [String] = []
+        var rtStructPaths: [String] = []
+
+        while let fileURL = enumerator?.nextObject() as? URL {
+            guard let values = try? fileURL.resourceValues(forKeys: [.isRegularFileKey]), values.isRegularFile == true else {
+                continue
+            }
+
+            if isLikelyDicomFile(at: fileURL) {
+                dicomPaths.append(fileURL.path)
+                if isLikelyRTStruct(at: fileURL) {
+                    rtStructPaths.append(fileURL.path)
+                }
+            }
+        }
+
+        guard !dicomPaths.isEmpty else {
+            throw SegmentationPostProcessingError.noImportableResults
+        }
+
+        var importedObjectIDs: [NSManagedObjectID] = []
+        var importError: Error?
+
+        DispatchQueue.main.sync {
+            guard let database = BrowserController.currentBrowser()?.database() else {
+                importError = SegmentationPostProcessingError.databaseUnavailable
+                return
+            }
+
+            if let result = database.addFiles(
+                atPaths: dicomPaths,
+                postNotifications: true,
+                dicomOnly: true,
+                rereadExistingItems: false,
+                generatedByOsiriX: true,
+                returnArray: true
+            ) as? [NSManagedObjectID] {
+                importedObjectIDs = result
+            }
+        }
+
+        if let error = importError {
+            throw error
+        }
+
+        return SegmentationImportResult(
+            addedFilePaths: dicomPaths,
+            rtStructPaths: rtStructPaths,
+            importedObjectIDs: importedObjectIDs,
+            outputType: .dicom
+        )
+    }
+
+    private func importNiftiOutputs(from directory: URL) throws -> SegmentationImportResult {
+        let fileManager = FileManager.default
+        let enumerator = fileManager.enumerator(
+            at: directory,
+            includingPropertiesForKeys: [.isRegularFileKey],
+            options: [.skipsHiddenFiles]
+        )
+
+        var niftiPaths: [String] = []
+
+        while let fileURL = enumerator?.nextObject() as? URL {
+            guard let values = try? fileURL.resourceValues(forKeys: [.isRegularFileKey]), values.isRegularFile == true else {
+                continue
+            }
+
+            if isLikelyNiftiFile(at: fileURL) {
+                niftiPaths.append(fileURL.path)
+            }
+        }
+
+        guard !niftiPaths.isEmpty else {
+            throw SegmentationPostProcessingError.noImportableResults
+        }
+
+        var importedObjectIDs: [NSManagedObjectID] = []
+        var importError: Error?
+
+        DispatchQueue.main.sync {
+            guard let database = BrowserController.currentBrowser()?.database() else {
+                importError = SegmentationPostProcessingError.databaseUnavailable
+                return
+            }
+
+            if let result = database.addFiles(
+                atPaths: niftiPaths,
+                postNotifications: true,
+                dicomOnly: false,
+                rereadExistingItems: false,
+                generatedByOsiriX: true,
+                returnArray: true
+            ) as? [NSManagedObjectID] {
+                importedObjectIDs = result
+            }
+        }
+
+        if let error = importError {
+            throw error
+        }
+
+        return SegmentationImportResult(
+            addedFilePaths: niftiPaths,
+            rtStructPaths: [],
+            importedObjectIDs: importedObjectIDs,
+            outputType: .nifti
+        )
+    }
+
+    private func updateVisualization(
+        with importResult: SegmentationImportResult,
+        exportContext: ExportResult,
+        progressController: SegmentationProgressWindowController?
+    ) {
+        guard importResult.outputType == .dicom, !importResult.rtStructPaths.isEmpty else {
+            return
+        }
+
+        DispatchQueue.main.async {
+            guard let browser = BrowserController.currentBrowser() else {
+                progressController?.append("Unable to locate the Horos browser to update the viewer.")
+                return
+            }
+
+            let viewer = ViewerController.frontMostDisplayed2DViewer() ?? self.openViewer(for: exportContext, browser: browser)
+
+            guard let activeViewer = viewer else {
+                progressController?.append("Unable to open a viewer for RT Struct overlay.")
+                return
+            }
+
+            for path in importResult.rtStructPaths {
+                activeViewer.roiLoad(fromSeries: path)
+            }
+
+            activeViewer.needsDisplayUpdate()
+            progressController?.append("Applied \(importResult.rtStructPaths.count) RT Struct overlay(s) to the active viewer.")
+        }
+    }
+
+    private func openViewer(for exportContext: ExportResult, browser: BrowserController) -> ViewerController? {
+        for series in exportContext.series {
+            if let viewer = browser.loadSeries(series.managedObject, viewer: nil, firstViewer: true, keyImagesOnly: false) {
+                return viewer
+            }
+        }
+
+        return nil
+    }
+
+    private func persistAuditMetadata(
+        for importResult: SegmentationImportResult,
+        exportContext: ExportResult,
+        outputDirectory: URL,
+        preferences: SegmentationPreferences.State,
+        outputType: SegmentationOutputType,
+        executable: ExecutableResolution
+    ) {
+        auditQueue.async {
+            let version = self.fetchTotalSegmentatorVersion(using: executable)
+            let seriesInfo = exportContext.series.map {
+                SegmentationAuditEntry.SeriesInfo(
+                    seriesInstanceUID: $0.seriesInstanceUID,
+                    studyInstanceUID: $0.studyInstanceUID,
+                    modality: $0.modality,
+                    exportedFileCount: $0.exportedFiles.count
+                )
+            }
+
+            let entry = SegmentationAuditEntry(
+                timestamp: Date(),
+                outputDirectory: outputDirectory.path,
+                outputType: outputType.description,
+                importedFileCount: importResult.addedFilePaths.count,
+                rtStructCount: importResult.rtStructPaths.count,
+                task: preferences.task,
+                device: preferences.device,
+                useFast: preferences.useFast,
+                additionalArguments: preferences.additionalArguments,
+                modelVersion: version,
+                series: seriesInfo
+            )
+
+            do {
+                try self.appendAuditEntry(entry)
+            } catch {
+                NSLog("[TotalSegmentator] Failed to persist audit metadata: %@", error.localizedDescription)
+            }
+        }
+    }
+
+    private func appendAuditEntry(_ entry: SegmentationAuditEntry) throws {
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        let data = try encoder.encode(entry)
+        var lineData = data
+        lineData.append(0x0A)
+
+        let fileURL = try auditLogFileURL()
+
+        if FileManager.default.fileExists(atPath: fileURL.path) {
+            let handle = try FileHandle(forWritingTo: fileURL)
+            defer { handle.closeFile() }
+            handle.seekToEndOfFile()
+            handle.write(lineData)
+        } else {
+            try FileManager.default.createDirectory(
+                at: fileURL.deletingLastPathComponent(),
+                withIntermediateDirectories: true
+            )
+            try lineData.write(to: fileURL, options: .atomic)
+        }
+    }
+
+    private func auditLogFileURL() throws -> URL {
+        let fileManager = FileManager.default
+
+        guard let supportDirectory = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else {
+            throw NSError(
+                domain: "org.totalsegmentator.plugin",
+                code: 1001,
+                userInfo: [NSLocalizedDescriptionKey: "Unable to resolve the Application Support directory for audit logging."]
+            )
+        }
+
+        let pluginDirectory = supportDirectory.appendingPathComponent("TotalSegmentatorHorosPlugin", isDirectory: true)
+        return pluginDirectory.appendingPathComponent("audit-log.jsonl", isDirectory: false)
+    }
+
+    private func fetchTotalSegmentatorVersion(using executable: ExecutableResolution) -> String? {
+        let process = Process()
+        process.executableURL = executable.executableURL
+        process.arguments = executable.leadingArguments + ["--version"]
+        process.environment = executable.environment
+
+        let pipe = Pipe()
+        process.standardOutput = pipe
+        process.standardError = Pipe()
+
+        do {
+            try process.run()
+        } catch {
+            return nil
+        }
+
+        process.waitUntilExit()
+
+        guard process.terminationStatus == 0 else {
+            return nil
+        }
+
+        let data = pipe.fileHandleForReading.readDataToEndOfFile()
+        guard let version = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines), !version.isEmpty else {
+            return nil
+        }
+
+        return version
+    }
+
+    private func isLikelyDicomFile(at url: URL) -> Bool {
+        if DicomFile.isDICOMFile(url.path) {
+            return true
+        }
+
+        let ext = url.pathExtension.lowercased()
+        return ext == "dcm" || ext == "dicom"
+    }
+
+    private func isLikelyNiftiFile(at url: URL) -> Bool {
+        if DicomFile.isNIfTIFile(url.path) {
+            return true
+        }
+
+        let lowercased = url.lastPathComponent.lowercased()
+        return lowercased.hasSuffix(".nii") || lowercased.hasSuffix(".nii.gz")
+    }
+
+    private func isLikelyRTStruct(at url: URL) -> Bool {
+        let dicomIndicatesRTStruct: Bool = autoreleasepool(invoking: { () -> Bool in
+            guard let dicomFile = DicomFile(url.path) else {
+                return false
+            }
+
+            if dicomFile.getDicomFile() != 0 {
+                return false
+            }
+
+            guard let elements = dicomFile.dicomElements() as? [AnyHashable: Any] else {
+                return false
+            }
+
+            if let sopClassUID = elements["SOPClassUID"] as? String,
+               sopClassUID == "1.2.840.10008.5.1.4.1.1.481.3" {
+                return true
+            }
+
+            if let modality = (elements["Modality"] ?? elements["modality"]) as? String,
+               modality.uppercased() == "RTSTRUCT" {
+                return true
+            }
+
+            if let description = (elements["SeriesDescription"] ?? elements["seriesDescription"]) as? String {
+                let normalized = description.lowercased()
+                if normalized.contains("rtstruct") || normalized.contains("rt struct") {
+                    return true
+                }
+            }
+
+            return false
+        })
+
+        if dicomIndicatesRTStruct {
+            return true
+        }
+
+        return url.lastPathComponent.lowercased().contains("rtstruct")
     }
 
     private func validateSegmentationOutput(at url: URL) throws {
