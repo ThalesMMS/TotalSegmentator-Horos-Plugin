@@ -2074,9 +2074,26 @@ if __name__ == "__main__":
 
     private func persistPreferencesFromUI() {
         var updated = preferences.effectivePreferences()
+        let previousExecutable = updated.executablePath
         let previousLicense = updated.licenseKey
         let executablePath = executablePathField?.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
         updated.executablePath = executablePath?.isEmpty == false ? executablePath : nil
+
+        let normalizeExecutablePath: (String?) -> String? = { path in
+            guard let trimmed = path?.trimmingCharacters(in: .whitespacesAndNewlines), !trimmed.isEmpty else {
+                return nil
+            }
+            return (trimmed as NSString).expandingTildeInPath
+        }
+
+        let normalizedPreviousExecutable = normalizeExecutablePath(previousExecutable)
+        let normalizedUpdatedExecutable = normalizeExecutablePath(updated.executablePath)
+
+        if normalizedPreviousExecutable != normalizedUpdatedExecutable {
+            availableClassOptionsCache.removeAll()
+            selectedClassNames.removeAll()
+            updateClassSelectionSummary()
+        }
 
         if let selectedTask = taskPopupButton?.selectedItem?.representedObject as? String {
             updated.task = selectedTask
