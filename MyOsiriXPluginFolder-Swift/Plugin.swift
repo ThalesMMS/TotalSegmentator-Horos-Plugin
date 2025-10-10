@@ -278,15 +278,12 @@ class TotalSegmentatorHorosPlugin: PluginFilter {
         }
 
         let outputDetection = detectOutputType(from: additionalTokens)
-        let effectiveOutputType = outputDetection.explicit ? outputDetection.type : .dicom
+        let effectiveOutputType = outputDetection.type
+        let sanitizedAdditionalTokens = outputDetection.remainingTokens
 
         var arguments: [String] = []
         arguments.append(contentsOf: executableResolution.leadingArguments)
-        arguments.append(contentsOf: ["-i", exportResult.directory.path, "-o", output.path])
-
-        if !outputDetection.explicit {
-            arguments.append(contentsOf: ["--output_type", SegmentationOutputType.dicom.description])
-        }
+        arguments.append(contentsOf: ["-i", exportResult.directory.path, "-o", output.path, "--output_type", effectiveOutputType.description])
 
         if let task = currentPreferences.task, !task.isEmpty {
             arguments.append(contentsOf: ["--task", task])
@@ -300,17 +297,20 @@ class TotalSegmentatorHorosPlugin: PluginFilter {
             arguments.append(contentsOf: ["--device", device])
         }
 
-        if !additionalTokens.isEmpty {
-            arguments.append(contentsOf: additionalTokens)
+        if !sanitizedAdditionalTokens.isEmpty {
+            arguments.append(contentsOf: sanitizedAdditionalTokens)
         }
 
         let process = Process()
         process.executableURL = executableResolution.executableURL
         process.arguments = arguments
 
-        if let environment = executableResolution.environment {
-            process.environment = environment
+        var environment = ProcessInfo.processInfo.environment
+        environment["PYTHONUNBUFFERED"] = "1"
+        if let customEnvironment = executableResolution.environment {
+            environment.merge(customEnvironment) { _, new in new }
         }
+        process.environment = environment
 
         let stdoutPipe = Pipe()
         let stderrPipe = Pipe()
@@ -782,23 +782,46 @@ class TotalSegmentatorHorosPlugin: PluginFilter {
         return arguments
     }
 
-    private func detectOutputType(from tokens: [String]) -> (type: SegmentationOutputType, explicit: Bool) {
+    private func detectOutputType(from tokens: [String]) -> (type: SegmentationOutputType, remainingTokens: [String]) {
         var detectedType: SegmentationOutputType = .dicom
-        var explicit = false
+        var remainingTokens: [String] = []
 
-        for (index, token) in tokens.enumerated() {
+        var index = 0
+        while index < tokens.count {
+            let token = tokens[index]
+
             if token == "--output_type" {
-                explicit = true
-                let value = tokens.indices.contains(index + 1) ? tokens[index + 1] : nil
-                detectedType = SegmentationOutputType(argumentValue: value)
-            } else if token.hasPrefix("--output_type=") {
-                explicit = true
+                let nextIndex = index + 1
+                if nextIndex < tokens.count {
+                    let valueCandidate = tokens[nextIndex]
+                    if valueCandidate.hasPrefix("--") {
+                        detectedType = .dicom
+                        index += 1
+                        continue
+                    }
+
+                    detectedType = SegmentationOutputType(argumentValue: valueCandidate)
+                    index += 2
+                    continue
+                }
+
+                detectedType = .dicom
+                index += 1
+                continue
+            }
+
+            if token.hasPrefix("--output_type=") {
                 let value = String(token.dropFirst("--output_type=".count))
                 detectedType = SegmentationOutputType(argumentValue: value)
+                index += 1
+                continue
             }
+
+            remainingTokens.append(token)
+            index += 1
         }
 
-        return (detectedType, explicit)
+        return (detectedType, remainingTokens)
     }
 
     private func integrateSegmentationOutput(
