@@ -4,3 +4,5 @@
 
 #import <Horos/PluginFilter.h>
 #import <Horos/BrowserController.h>
+#import <Horos/DicomStudy.h>
+#import <Horos/DicomSeries.h>
