@@ -101,7 +101,7 @@ private struct SegmentationAuditEntry: Codable {
     let series: [SeriesInfo]
 }
 
-class TotalSegmentatorPlugin: PluginFilter {
+class TotalSegmentatorHorosPlugin: PluginFilter {
     @IBOutlet private weak var settingsWindow: NSWindow!
     @IBOutlet private weak var executablePathField: NSTextField!
     @IBOutlet private weak var taskPopupButton: NSPopUpButton!
@@ -152,7 +152,7 @@ class TotalSegmentatorPlugin: PluginFilter {
     override func filterImage(_ menuName: String!) -> Int {
         guard let menuName = menuName,
               let action = MenuAction(rawValue: menuName) else {
-            NSLog("TotalSegmentatorPlugin received unsupported menu action: %@", menuName ?? "nil")
+            NSLog("TotalSegmentatorHorosPlugin received unsupported menu action: %@", menuName ?? "nil")
             presentAlert(title: "TotalSegmentator", message: "Unsupported action selected.")
             return 0
         }
@@ -218,7 +218,7 @@ class TotalSegmentatorPlugin: PluginFilter {
         bundle?.loadNibNamed("Settings", owner: self, topLevelObjects: nil)
         settingsWindow?.delegate = self
         configureSettingsInterfaceIfNeeded()
-        NSLog("TotalSegmentatorPlugin loaded and ready.")
+        NSLog("TotalSegmentatorHorosPlugin loaded and ready.")
     }
 
     private func startSegmentationFlow() {
@@ -450,7 +450,7 @@ class TotalSegmentatorPlugin: PluginFilter {
 
     private func currentDicomStudy() -> NSObject? {
         guard let browser = BrowserController.currentBrowser() else {
-            NSLog("TotalSegmentatorPlugin could not determine the current browser controller.")
+            NSLog("TotalSegmentatorHorosPlugin could not determine the current browser controller.")
             return nil
         }
 
@@ -1204,7 +1204,7 @@ class TotalSegmentatorPlugin: PluginFilter {
     }
 }
 
-private extension TotalSegmentatorPlugin {
+private extension TotalSegmentatorHorosPlugin {
     struct SegmentationPreferences {
         struct State {
             var executablePath: String?
@@ -1282,7 +1282,7 @@ private enum SegmentationValidationError: LocalizedError {
     }
 }
 
-extension TotalSegmentatorPlugin: NSWindowDelegate {
+extension TotalSegmentatorHorosPlugin: NSWindowDelegate {
     func windowWillClose(_ notification: Notification) {
         guard let window = notification.object as? NSWindow,
               window == settingsWindow else {

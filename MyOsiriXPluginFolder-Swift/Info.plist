@@ -5,9 +5,9 @@
         <key>CFBundleIdentifier</key>
         <string>com.totalsegmentator.horosplugin</string>
         <key>CFBundleName</key>
-        <string>TotalSegmentatorPlugin</string>
+        <string>TotalSegmentatorHorosPlugin</string>
         <key>NSPrincipalClass</key>
-        <string>TotalSegmentatorPlugin</string>
+        <string>TotalSegmentatorHorosPlugin</string>
         <key>pluginType</key>
         <string>imageFilter</string>
         <key>MenuTitles</key>
