@@ -514,7 +514,14 @@ else:
         }
 
         let outputDetection = detectOutputType(from: additionalTokens)
-        let sanitizedAdditionalTokens = removeROISubsetTokens(from: outputDetection.remainingTokens)
+        let configuredClassSelection = currentPreferences.selectedClassNames
+        let classSelectionSupported = supportsClassSelection(for: currentPreferences.task)
+        let sanitizedAdditionalTokens: [String]
+        if configuredClassSelection.isEmpty || !classSelectionSupported {
+            sanitizedAdditionalTokens = outputDetection.remainingTokens
+        } else {
+            sanitizedAdditionalTokens = removeROISubsetTokens(from: outputDetection.remainingTokens)
+        }
         let effectiveOutputType: SegmentationOutputType = .dicom
         if outputDetection.type != .dicom {
             logToConsole("Overriding requested output type '\(outputDetection.type.description)' with 'dicom' to ensure RT Struct overlays are generated.")
@@ -537,9 +544,8 @@ else:
             totalSegmentatorArguments.append(contentsOf: sanitizedAdditionalTokens)
         }
 
-        let configuredClassSelection = currentPreferences.selectedClassNames
         if !configuredClassSelection.isEmpty {
-            if supportsClassSelection(for: currentPreferences.task) {
+            if classSelectionSupported {
                 totalSegmentatorArguments.append("--roi_subset")
                 totalSegmentatorArguments.append(contentsOf: configuredClassSelection)
             } else {
