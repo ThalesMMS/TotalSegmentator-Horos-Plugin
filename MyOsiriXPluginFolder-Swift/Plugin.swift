@@ -171,6 +171,7 @@ class TotalSegmentatorHorosPlugin: PluginFilter {
     private var setupProgressWindowController: SegmentationProgressWindowController?
     private let auditQueue = DispatchQueue(label: "org.totalsegmentator.horos.audit", qos: .utility)
     private var classSelectionController: ClassSelectionWindowController?
+    private var runConfigurationController: RunSegmentationWindowController?
     private var availableClassOptionsCache: [String: [String]] = [:]
     private var selectedClassNames: Set<String> = [] {
         didSet { updateClassSelectionSummary() }
@@ -451,25 +452,36 @@ else:
     }
 
 
+    private func classSelectionSummaryComponents(for names: [String]) -> (text: String, tooltip: String?) {
+        let sorted = names.sorted()
+        if sorted.isEmpty {
+            return (
+                NSLocalizedString("All classes", comment: "Summary shown when all classes are selected"),
+                nil
+            )
+        }
+
+        if sorted.count <= 3 {
+            let summary = sorted.joined(separator: ", ")
+            return (summary, summary)
+        }
+
+        let summaryText = String(
+            format: NSLocalizedString("%d classes selected", comment: "Summary with number of selected classes"),
+            sorted.count
+        )
+        return (summaryText, sorted.joined(separator: ", "))
+    }
+
     private func updateClassSelectionSummary() {
         DispatchQueue.main.async { [weak self] in
             guard let self = self,
                   let summaryField = self.classSelectionSummaryField else { return }
 
-            let names = Array(self.selectedClassNames).sorted()
-            let summaryText: String
-            if names.isEmpty {
-                summaryText = NSLocalizedString("All classes", comment: "Summary shown when all classes are selected")
-                summaryField.toolTip = nil
-            } else if names.count <= 3 {
-                summaryText = names.joined(separator: ", ")
-                summaryField.toolTip = summaryText
-            } else {
-                summaryText = String(format: NSLocalizedString("%d classes selected", comment: "Summary with number of selected classes"), names.count)
-                summaryField.toolTip = names.joined(separator: ", ")
-            }
-
-            summaryField.stringValue = summaryText
+            let names = Array(self.selectedClassNames)
+            let summary = self.classSelectionSummaryComponents(for: names)
+            summaryField.stringValue = summary.text
+            summaryField.toolTip = summary.tooltip
         }
     }
 
@@ -995,6 +1007,11 @@ After installing the package, re-run the segmentation.
             return
         }
 
+        guard let presentingWindow = viewer.window else {
+            presentAlert(title: "TotalSegmentator", message: "Unable to locate the active viewer window.")
+            return
+        }
+
         let exportResult: ExportResult
         do {
             exportResult = try exportActiveSeries(from: viewer)
@@ -1003,33 +1020,66 @@ After installing the package, re-run the segmentation.
             return
         }
 
-        guard let outputURL = promptForOutputDirectory() else {
-            NSLog("Segmentation cancelled: no output directory selected.")
-            return
+        var effectivePreferences = preferences.effectivePreferences()
+        let runtimeSelection = Array(selectedClassNames).sorted()
+        if runtimeSelection != effectivePreferences.selectedClassNames {
+            effectivePreferences.selectedClassNames = runtimeSelection
         }
 
-        DispatchQueue.global(qos: .userInitiated).async {
-            self.runSegmentation(exportResult: exportResult, output: outputURL)
+        let classSummary = classSelectionSummaryComponents(for: effectivePreferences.selectedClassNames)
+        let controller = RunSegmentationWindowController()
+        controller.configuration = RunSegmentationWindowController.Configuration(
+            preferences: effectivePreferences,
+            taskOptions: taskOptions,
+            deviceOptions: deviceOptions,
+            classSummaryText: classSummary.text,
+            classSummaryTooltip: classSummary.tooltip,
+            outputDirectory: nil
+        )
+
+        controller.onCompletion = { [weak self] result in
+            guard let self = self else { return }
+
+            if let result = result {
+                self.preferences.store(result.preferences)
+                self.selectedClassNames = Set(result.preferences.selectedClassNames)
+                self.runConfigurationController = nil
+
+                DispatchQueue.global(qos: .userInitiated).async {
+                    self.runSegmentation(
+                        exportResult: exportResult,
+                        output: result.outputDirectory,
+                        preferences: result.preferences
+                    )
+                }
+            } else {
+                self.cleanupTemporaryDirectory(exportResult.directory)
+                self.runConfigurationController = nil
+            }
+        }
+
+        runConfigurationController = controller
+
+        DispatchQueue.main.async {
+            guard let sheetWindow = controller.window else {
+                self.presentAlert(title: "TotalSegmentator", message: "Unable to load the run configuration interface.")
+                self.cleanupTemporaryDirectory(exportResult.directory)
+                self.runConfigurationController = nil
+                return
+            }
+
+            presentingWindow.beginSheet(sheetWindow, completionHandler: nil)
         }
     }
 
-    private func promptForOutputDirectory() -> URL? {
-        let panel = NSOpenPanel()
-        panel.canChooseFiles = false
-        panel.canChooseDirectories = true
-        panel.allowsMultipleSelection = false
-        panel.prompt = "Choose"
-        panel.title = "Select output directory for TotalSegmentator"
-
-        return panel.runModal() == .OK ? panel.url : nil
-    }
-
-    private func runSegmentation(exportResult: ExportResult, output: URL) {
+    private func runSegmentation(
+        exportResult: ExportResult,
+        output: URL,
+        preferences preferencesState: SegmentationPreferences.State
+    ) {
         defer { cleanupTemporaryDirectory(exportResult.directory) }
 
-        let currentPreferences = preferences.effectivePreferences()
-
-        guard let executableResolution = resolvePythonInterpreter(using: currentPreferences) else {
+        guard let executableResolution = resolvePythonInterpreter(using: preferencesState) else {
             DispatchQueue.main.async {
                 self.presentAlert(
                     title: "TotalSegmentator",
@@ -1040,7 +1090,7 @@ After installing the package, re-run the segmentation.
         }
 
         let additionalTokens: [String]
-        if let additional = currentPreferences.additionalArguments,
+        if let additional = preferencesState.additionalArguments,
            !additional.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             additionalTokens = tokenize(commandLine: additional)
         } else {
@@ -1061,25 +1111,29 @@ After installing the package, re-run the segmentation.
         }
 
         var totalSegmentatorArguments: [String] = []
-        if let task = currentPreferences.task, !task.isEmpty {
+        if let task = preferencesState.task, !task.isEmpty {
             totalSegmentatorArguments.append(contentsOf: ["--task", task])
         }
 
-        if currentPreferences.useFast {
+        if preferencesState.useFast {
             totalSegmentatorArguments.append("--fast")
         }
 
-        if let device = currentPreferences.device, !device.isEmpty {
+        if let device = preferencesState.device, !device.isEmpty {
             totalSegmentatorArguments.append(contentsOf: ["--device", device])
+        }
+
+        if let licenseKey = preferencesState.licenseKey, !licenseKey.isEmpty {
+            totalSegmentatorArguments.append(contentsOf: ["--license_number", licenseKey])
         }
 
         if !sanitizedAdditionalTokens.isEmpty {
             totalSegmentatorArguments.append(contentsOf: sanitizedAdditionalTokens)
         }
 
-        let configuredClassSelection = currentPreferences.selectedClassNames
+        let configuredClassSelection = preferencesState.selectedClassNames
         if !configuredClassSelection.isEmpty {
-            if supportsClassSelection(for: currentPreferences.task) {
+            if supportsClassSelection(for: preferencesState.task) {
                 totalSegmentatorArguments.append("--roi_subset")
                 totalSegmentatorArguments.append(contentsOf: configuredClassSelection)
             } else {
@@ -1125,7 +1179,7 @@ After installing the package, re-run the segmentation.
         if let customEnvironment = executableResolution.environment {
             environment.merge(customEnvironment) { _, new in new }
         }
-        if let dcm2niixPath = currentPreferences.dcm2niixPath, !dcm2niixPath.isEmpty {
+        if let dcm2niixPath = preferencesState.dcm2niixPath, !dcm2niixPath.isEmpty {
             let binaryURL = URL(fileURLWithPath: dcm2niixPath)
             let directoryPath = binaryURL.deletingLastPathComponent().path
             var pathVariable = environment["PATH"] ?? ""
@@ -1212,7 +1266,7 @@ After installing the package, re-run the segmentation.
                     at: output,
                     outputType: effectiveOutputType,
                     exportContext: exportResult,
-                    preferences: currentPreferences,
+                    preferences: preferencesState,
                     executable: executableResolution,
                     progressController: progressController
                 )
@@ -2851,6 +2905,7 @@ private extension TotalSegmentatorHorosPlugin {
             var licenseKey: String?
             var selectedClassNames: [String]
             var dcm2niixPath: String?
+            var licenseKey: String?
             var hideROIs: Bool = false
         }
 
@@ -2863,6 +2918,7 @@ private extension TotalSegmentatorHorosPlugin {
             static let licenseKey = "TotalSegmentatorLicenseKey"
             static let selectedClasses = "TotalSegmentatorSelectedClasses"
             static let dcm2niixPath = "TotalSegmentatorDcm2NiixPath"
+            static let licenseKey = "TotalSegmentatorLicenseKey"
             static let hideROIs = "TotalSegmentatorHideROIs"
         }
 
@@ -2878,6 +2934,7 @@ private extension TotalSegmentatorHorosPlugin {
                 licenseKey: defaults.string(forKey: Keys.licenseKey),
                 selectedClassNames: defaults.stringArray(forKey: Keys.selectedClasses) ?? [],
                 dcm2niixPath: defaults.string(forKey: Keys.dcm2niixPath),
+                licenseKey: defaults.string(forKey: Keys.licenseKey)
                 hideROIs: defaults.bool(forKey: Keys.hideROIs)
             )
         }
@@ -2891,6 +2948,7 @@ private extension TotalSegmentatorHorosPlugin {
             defaults.setValue(state.licenseKey, forKey: Keys.licenseKey)
             defaults.setValue(state.selectedClassNames, forKey: Keys.selectedClasses)
             defaults.setValue(state.dcm2niixPath, forKey: Keys.dcm2niixPath)
+            defaults.setValue(state.licenseKey, forKey: Keys.licenseKey)
             defaults.setValue(state.hideROIs, forKey: Keys.hideROIs)
         }
 
