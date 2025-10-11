@@ -720,6 +720,7 @@ sys.exit(0 if spec is not None else 1)
         }
 
         process.waitUntilExit()
+        progressController.append("TotalSegmentator finished with status \(process.terminationStatus). Validating outputs…")
 
         stdoutHandle.readabilityHandler = nil
         stderrHandle.readabilityHandler = nil
@@ -1386,6 +1387,16 @@ After installing the package, re-run the segmentation.
         var stderrBuffer = Data()
 
         let progressController = makeProgressWindow(for: process)
+        let seriesCount = exportResult.series.count
+        let taskDescriptor = preferencesState.task?.isEmpty == false ? preferencesState.task! : "total"
+        progressController.append("Running TotalSegmentator (\(taskDescriptor) task) on \(seriesCount) exported series…")
+        if let device = preferencesState.device, !device.isEmpty {
+            progressController.append("Execution device: \(device).")
+        }
+        if !configuredClassSelection.isEmpty {
+            let summary = configuredClassSelection.sorted().joined(separator: ", ")
+            progressController.append("ROI subset: \(summary).")
+        }
         let stdoutHandle = stdoutPipe.fileHandleForReading
         let stderrHandle = stderrPipe.fileHandleForReading
 
@@ -1431,6 +1442,7 @@ After installing the package, re-run the segmentation.
         }
 
         process.waitUntilExit()
+        progressController.append("TotalSegmentator finished with status \(process.terminationStatus). Validating outputs…")
 
         stdoutHandle.readabilityHandler = nil
         stderrHandle.readabilityHandler = nil
@@ -1480,10 +1492,13 @@ After installing the package, re-run the segmentation.
                     progressController.append("Detected \(importResult.rtStructPaths.count) RT Struct file(s).")
                 }
                 progressController.close(after: 0.5)
-                self.presentAlert(
-                    title: "TotalSegmentator",
-                    message: "Segmentation finished successfully."
-                )
+                let successMessage: String
+                if importResult.rtStructPaths.isEmpty {
+                    successMessage = "Segmentation finished successfully."
+                } else {
+                    successMessage = "Segmentation finished successfully. Generated ROIs are now available in Horos."
+                }
+                self.presentAlert(title: "TotalSegmentator", message: successMessage)
             case .failure(let error):
                 let message: String
                 if (error as NSError).domain == "org.totalsegmentator.plugin" {
@@ -2564,6 +2579,8 @@ set_license_number(license_value, skip_validation=skip_validation)
         executable: ExecutableResolution,
         progressController: SegmentationProgressWindowController?
     ) throws -> SegmentationImportResult {
+        let normalizedOutput = outputType.description.uppercased()
+        progressController?.append("Importing TotalSegmentator outputs (\(normalizedOutput))…")
         let importResult: SegmentationImportResult
         let auditOutputType: SegmentationOutputType
         let convertedFromNifti: Bool
@@ -2588,6 +2605,7 @@ set_license_number(license_value, skip_validation=skip_validation)
             throw SegmentationPostProcessingError.unsupportedOutputType(value)
         }
 
+        progressController?.append("Preparing ROI overlays for visualization…")
         updateVisualization(
             with: importResult,
             exportContext: exportContext,
@@ -2836,6 +2854,7 @@ set_license_number(license_value, skip_validation=skip_validation)
         }
 
         DispatchQueue.main.async {
+            progressController?.append("Applying RT Struct overlays to the active viewer…")
             guard let browser = BrowserController.currentBrowser() else {
                 progressController?.append("Unable to locate the Horos browser to update the viewer.")
                 return
@@ -2862,7 +2881,7 @@ set_license_number(license_value, skip_validation=skip_validation)
             if appliedOverlayCount == 0 {
                 progressController?.append("No RT Struct overlays could be applied to the active viewer.")
             } else {
-                self.persistROIs(from: activeViewer, overlayCount: appliedOverlayCount, progressController: progressController)
+                self.persistROIs(from: activeViewer)
             }
 
             if let database = browser.database,
@@ -2881,7 +2900,7 @@ set_license_number(license_value, skip_validation=skip_validation)
             activeViewer.refresh()
             activeViewer.window?.makeKeyAndOrderFront(nil)
             activeViewer.needsDisplayUpdate()
-            progressController?.append("Applied \(importResult.rtStructPaths.count) RT Struct overlay(s) to the active viewer.")
+            progressController?.append("Applied \(appliedOverlayCount) RT Struct overlay(s) and stored the corresponding ROIs in Horos.")
         }
     }
 
@@ -2928,17 +2947,15 @@ set_license_number(license_value, skip_validation=skip_validation)
         return false
     }
 
-    private func persistROIs(from viewer: ViewerController, overlayCount: Int, progressController: SegmentationProgressWindowController?) {
+    private func persistROIs(from viewer: ViewerController) {
         let maxIndex = Int(viewer.maxMovieIndex())
         if maxIndex >= 0 {
             for index in 0...maxIndex {
-                viewer.saveROI(Int32(index))
+                viewer.saveROI(Int(index))
             }
         } else {
-            viewer.saveROI(viewer.curMovieIndex())
+            viewer.saveROI(Int(viewer.curMovieIndex()))
         }
-
-        progressController?.append("Saved ROI overlays derived from \(overlayCount) RT Struct file(s).")
     }
 
     private func persistAuditMetadata(

@@ -25,9 +25,11 @@ The repository still ships the official TotalSegmentator sources (`totalsegmenta
 
 ## Screenshots
 
-| Segmentation (1) | Segmentation (2) | Plugin Menu |
-| --- | --- | --- |
-| ![Segmentation example 1](Screenshots/screenshot1.png) | ![Segmentation example 2](Screenshots/screenshot2.png) | ![TotalSegmentator plugin menu](Screenshots/screenshot3.png) |
+![Segmentation example 1](Screenshots/screenshot1.png)
+
+![Segmentation example 2](Screenshots/screenshot2.png)
+
+![TotalSegmentator plugin menu](Screenshots/screenshot3.png)
 
 ---
 
@@ -137,5 +139,14 @@ tests/                          # TotalSegmentator test suite (not plugin-specif
 - **TotalSegmentator**: University Hospital Basel, Apache 2.0.
 - **Horos**: open-source project derived from OsiriX.
 - **Horos Plugin Code**: (c) 2025, TotalSegmentator Horos Plugin community. Additional code follows Apache 2.0 unless otherwise noted.
+- **Acknowledgements**: thanks to the OsiriX team for the OsiriX plugin template that kick-started this project.
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at
+
+```
+   http://www.apache.org/licenses/LICENSE-2.0
+```
+
+Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
 
 Contributions are welcome! Please open issues or pull requests with details about your test environment (macOS version, Horos build, Python version).
