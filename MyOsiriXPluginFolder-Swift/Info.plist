@@ -6,14 +6,24 @@
 	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	<key>CFBundleName</key>
 	<string>TotalSegmentatorHorosPlugin</string>
-        <key>MenuTitles</key>
-        <array>
-                <string>Run TotalSegmentator</string>
-                <string>TotalSegmentator Settings</string>
-        </array>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundlePackageType</key>
+	<string>BNDL</string>
+	<key>CFBundleSignature</key>
+	<string>????</string>
+	<key>MenuTitles</key>
+	<array>
+		<string>Run TotalSegmentator</string>
+		<string>TotalSegmentator Settings</string>
+	</array>
 	<key>NSPrincipalClass</key>
 	<string>TotalSegmentatorHorosPlugin</string>
 	<key>pluginType</key>
 	<string>imageFilter</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>11.0</string>
+	<key>MACOSX_DEPLOYMENT_TARGET</key>
+	<string>11.0</string>
 </dict>
 </plist>

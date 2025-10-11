@@ -178,26 +178,6 @@ class TotalSegmentatorHorosPlugin: PluginFilter {
         didSet { updateClassSelectionSummary() }
     }
 
-    private enum ToolbarItemConfiguration {
-        static let viewerIdentifier = NSToolbarItem.Identifier("org.totalsegmentator.horos.toolbar.run")
-        static let imageResourceName = "TotalSegmentatorToolbar"
-        static let imageResourceExtension = "png"
-        static let label = NSLocalizedString("TotalSegmentator", comment: "Toolbar item label")
-        static let toolTip = NSLocalizedString("Run TotalSegmentator segmentation", comment: "Toolbar item tooltip")
-    }
-
-    private lazy var segmentationToolbarImage: NSImage? = {
-        let bundle = Bundle(for: TotalSegmentatorHorosPlugin.self)
-        if let url = bundle.url(
-            forResource: ToolbarItemConfiguration.imageResourceName,
-            withExtension: ToolbarItemConfiguration.imageResourceExtension
-        ) {
-            let image = NSImage(contentsOf: url)
-            image?.isTemplate = true
-            return image
-        }
-        return nil
-    }()
 
     private let taskOptions: [(title: String, value: String?)] = [
         (NSLocalizedString("Automatic (default)", comment: "Default task option"), nil),
@@ -249,50 +229,6 @@ class TotalSegmentatorHorosPlugin: PluginFilter {
         return 0
     }
 
-    override func setMenus() {
-        super.setMenus()
-    }
-
-    override func toolbarAllowedIdentifiers(forViewer controller: Any!) -> [Any]! {
-        var identifiers = normalizedToolbarIdentifiers(from: super.toolbarAllowedIdentifiers(forViewer: controller))
-        if !identifiers.contains(ToolbarItemConfiguration.viewerIdentifier) {
-            identifiers.append(ToolbarItemConfiguration.viewerIdentifier)
-        }
-        return identifiers
-    }
-
-    override func toolbarAllowedIdentifiers(forVRViewer controller: Any!) -> [Any]! {
-        var identifiers = normalizedToolbarIdentifiers(from: super.toolbarAllowedIdentifiers(forVRViewer: controller))
-        if !identifiers.contains(ToolbarItemConfiguration.viewerIdentifier) {
-            identifiers.append(ToolbarItemConfiguration.viewerIdentifier)
-        }
-        return identifiers
-    }
-
-    override func toolbarItem(forItemIdentifier identifier: String!, forViewer controller: Any!) -> NSToolbarItem! {
-        guard let identifier = identifier else {
-            return super.toolbarItem(forItemIdentifier: identifier, forViewer: controller)
-        }
-
-        if NSToolbarItem.Identifier(identifier) == ToolbarItemConfiguration.viewerIdentifier {
-            return makeSegmentationToolbarItem()
-        }
-
-        return super.toolbarItem(forItemIdentifier: identifier, forViewer: controller)
-    }
-
-    override func toolbarItem(forItemIdentifier identifier: String!, forVRViewer controller: Any!) -> NSToolbarItem! {
-        guard let identifier = identifier else {
-            return super.toolbarItem(forItemIdentifier: identifier, forVRViewer: controller)
-        }
-
-        if NSToolbarItem.Identifier(identifier) == ToolbarItemConfiguration.viewerIdentifier {
-            return makeSegmentationToolbarItem()
-        }
-
-        return super.toolbarItem(forItemIdentifier: identifier, forVRViewer: controller)
-    }
-
     private func presentSettingsWindow() {
         guard let window = settingsWindow else {
             NSLog("Settings window has not been loaded. Did initPlugin run?")
@@ -323,39 +259,6 @@ class TotalSegmentatorHorosPlugin: PluginFilter {
 
     @objc private func runSegmentationFromToolbar(_ sender: Any?) {
         startSegmentationFlow()
-    }
-
-    private func normalizedToolbarIdentifiers(from array: [Any]?) -> [NSToolbarItem.Identifier] {
-        guard let array = array else { return [] }
-
-        var identifiers: [NSToolbarItem.Identifier] = []
-        identifiers.reserveCapacity(array.count + 1)
-        for element in array {
-            if let identifier = element as? NSToolbarItem.Identifier {
-                identifiers.append(identifier)
-            } else if let string = element as? String {
-                identifiers.append(NSToolbarItem.Identifier(string))
-            }
-        }
-        return identifiers
-    }
-
-    private func makeSegmentationToolbarItem() -> NSToolbarItem {
-        let item = NSToolbarItem(itemIdentifier: ToolbarItemConfiguration.viewerIdentifier)
-        item.label = ToolbarItemConfiguration.label
-        item.paletteLabel = ToolbarItemConfiguration.label
-        item.toolTip = ToolbarItemConfiguration.toolTip
-        item.image = segmentationToolbarImage
-        item.target = self
-        item.action = #selector(runSegmentationFromToolbar(_:))
-        return item
-    }
-
-    private func currentViewerController() -> ViewerController? {
-        if responds(to: Selector(("viewerController"))) {
-            return self.value(forKey: "viewerController") as? ViewerController
-        }
-        return nil
     }
 
     @IBAction private func browseForExecutable(_ sender: Any) {
@@ -1271,9 +1174,15 @@ After installing the package, re-run the segmentation.
         }
     }
 
+    override func isCertifiedForMedicalImaging() -> Bool {
+        return true
+    }
+
     private func startSegmentationFlow() {
         logToConsole("startSegmentationFlow called")
-        guard let viewer = currentViewerController() ?? ViewerController.frontMostDisplayed2DViewer() else {
+        let primaryViewer = (self.value(forKey: "viewerController") as? ViewerController) ?? ViewerController.frontMostDisplayed2DViewer()
+        logToConsole("viewerController via KVC: \((self.value(forKey: "viewerController") as? ViewerController) != nil)")
+        guard let viewer = primaryViewer else {
             presentAlert(title: "TotalSegmentator", message: "No active viewer is available.")
             logToConsole("startSegmentationFlow aborted: no 2D viewer available.")
             return
