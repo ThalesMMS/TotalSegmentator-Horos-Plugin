@@ -7,6 +7,15 @@ final class SegmentationProgressWindowController: NSWindowController {
         view.isSelectable = true
         view.font = NSFont.monospacedSystemFont(ofSize: 12, weight: .regular)
         view.textContainerInset = NSSize(width: 4, height: 8)
+        view.minSize = NSSize(width: 0, height: 0)
+        view.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
+        view.isVerticallyResizable = true
+        view.isHorizontallyResizable = false
+        view.autoresizingMask = [.width]
+        if let container = view.textContainer {
+            container.containerSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
+            container.widthTracksTextView = true
+        }
         return view
     }()
 
@@ -132,11 +141,13 @@ final class SegmentationProgressWindowController: NSWindowController {
         let scrollView = NSScrollView()
         scrollView.translatesAutoresizingMaskIntoConstraints = false
         scrollView.hasVerticalScroller = true
+        scrollView.hasHorizontalScroller = false
         scrollView.documentView = textView
         scrollView.borderType = .bezelBorder
 
         textView.backgroundColor = NSColor.textBackgroundColor
         textView.textColor = NSColor.labelColor
+        textView.frame = scrollView.contentView.bounds
 
         contentView.addSubview(scrollView)
         contentView.addSubview(progressIndicator)

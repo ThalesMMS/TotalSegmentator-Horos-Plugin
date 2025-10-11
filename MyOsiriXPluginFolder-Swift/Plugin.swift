@@ -2861,6 +2861,8 @@ set_license_number(license_value, skip_validation=skip_validation)
 
             if appliedOverlayCount == 0 {
                 progressController?.append("No RT Struct overlays could be applied to the active viewer.")
+            } else {
+                self.persistROIs(from: activeViewer, overlayCount: appliedOverlayCount, progressController: progressController)
             }
 
             if let database = browser.database,
@@ -2924,6 +2926,19 @@ set_license_number(license_value, skip_validation=skip_validation)
         }
 
         return false
+    }
+
+    private func persistROIs(from viewer: ViewerController, overlayCount: Int, progressController: SegmentationProgressWindowController?) {
+        let maxIndex = Int(viewer.maxMovieIndex())
+        if maxIndex >= 0 {
+            for index in 0...maxIndex {
+                viewer.saveROI(Int32(index))
+            }
+        } else {
+            viewer.saveROI(viewer.curMovieIndex())
+        }
+
+        progressController?.append("Saved ROI overlays derived from \(overlayCount) RT Struct file(s).")
     }
 
     private func persistAuditMetadata(
