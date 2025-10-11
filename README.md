@@ -23,6 +23,16 @@ The repository still ships the official TotalSegmentator sources (`totalsegmenta
 
 ---
 
+## Downloadable Builds
+
+Need a prebuilt bundle? Grab the latest debug build directly from this repository:
+
+- [TotalSegmentatorHorosPlugin.osirixplugin](Releases/TotalSegmentatorHorosPlugin.osirixplugin)
+
+To install, copy the downloaded `.osirixplugin` bundle into `~/Library/Application Support/Horos/Plugins/`, run `codesign --force --deep --sign -` on it (or sign with your certificate), and relaunch Horos. On first launch the plugin provisions its Python environment automatically; no additional files are required beyond Horos, a compatible macOS version, and an internet connection to fetch TotalSegmentator weights when needed.
+
+---
+
 ## Screenshots
 
 ![Segmentation example 1](Screenshots/screenshot1.png)
