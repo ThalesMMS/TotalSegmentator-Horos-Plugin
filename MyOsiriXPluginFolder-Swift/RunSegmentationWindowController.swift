@@ -3,6 +3,11 @@ import Cocoa
 final class RunSegmentationWindowController: NSWindowController, NSTextFieldDelegate {
     typealias PreferencesState = TotalSegmentatorHorosPlugin.SegmentationPreferences.State
 
+    private let fallbackOutputPath: String = {
+        let base = "~/temp/TotalSegmentator"
+        return (base as NSString).expandingTildeInPath
+    }()
+
     struct Configuration {
         var preferences: PreferencesState
         var taskOptions: [(title: String, value: String?)]
@@ -14,7 +19,7 @@ final class RunSegmentationWindowController: NSWindowController, NSTextFieldDele
 
     struct Result {
         let preferences: PreferencesState
-        let outputDirectory: URL
+        let outputDirectory: URL?
     }
 
     @IBOutlet private weak var taskPopupButton: NSPopUpButton!
@@ -52,7 +57,17 @@ final class RunSegmentationWindowController: NSWindowController, NSTextFieldDele
     override func windowDidLoad() {
         super.windowDidLoad()
         outputPathField?.delegate = self
+        launchButton?.isEnabled = true
+        if outputPathField?.stringValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true {
+            outputPathField?.stringValue = fallbackOutputPath
+        }
         applyConfiguration()
+    }
+
+    override func windowDidBecomeKey(_ notification: Notification) {
+        super.windowDidBecomeKey(notification)
+        launchButton?.isEnabled = true
+        launchButton?.alphaValue = 1.0
     }
 
     func controlTextDidChange(_ obj: Notification) {
@@ -87,12 +102,12 @@ final class RunSegmentationWindowController: NSWindowController, NSTextFieldDele
     }
 
     @IBAction private func launch(_ sender: Any) {
-        guard let preferences = gatherPreferencesFromUI(),
-              let outputDirectory = resolveOutputDirectory() else {
+        guard let preferences = gatherPreferencesFromUI() else {
             NSSound.beep()
             return
         }
 
+        let outputDirectory = resolveOutputDirectoryIfProvided()
         finish(with: Result(preferences: preferences, outputDirectory: outputDirectory))
     }
 
@@ -137,7 +152,7 @@ final class RunSegmentationWindowController: NSWindowController, NSTextFieldDele
         if let outputURL = configuration.outputDirectory {
             outputPathField?.stringValue = outputURL.path
         } else if outputPathField?.stringValue.isEmpty ?? true {
-            outputPathField?.placeholderString = NSLocalizedString("Choose a folder…", comment: "Output directory placeholder")
+            outputPathField?.stringValue = fallbackOutputPath
         }
 
         updateLaunchButtonState()
@@ -187,14 +202,19 @@ final class RunSegmentationWindowController: NSWindowController, NSTextFieldDele
         return preferences
     }
 
-    private func resolveOutputDirectory() -> URL? {
+    private func resolveOutputDirectoryIfProvided() -> URL? {
         let path = outputPathField?.stringValue.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        guard !path.isEmpty else { return nil }
-        let expanded = (path as NSString).expandingTildeInPath
-        return URL(fileURLWithPath: expanded, isDirectory: true)
+        let effectivePath: String
+        if path.isEmpty {
+            effectivePath = fallbackOutputPath
+        } else {
+            effectivePath = (path as NSString).expandingTildeInPath
+        }
+        return URL(fileURLWithPath: effectivePath, isDirectory: true)
     }
 
     private func updateLaunchButtonState() {
-        launchButton?.isEnabled = resolveOutputDirectory() != nil
+        launchButton?.isEnabled = true
+        launchButton?.alphaValue = 1.0
     }
 }

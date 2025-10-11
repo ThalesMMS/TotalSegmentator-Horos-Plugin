@@ -1232,7 +1232,7 @@ After installing the package, re-run the segmentation.
                 DispatchQueue.global(qos: .userInitiated).async {
                     self.runSegmentation(
                         exportResult: exportResult,
-                        output: result.outputDirectory,
+                        outputDirectory: result.outputDirectory,
                         preferences: result.preferences
                     )
                 }
@@ -1258,7 +1258,7 @@ After installing the package, re-run the segmentation.
 
     private func runSegmentation(
         exportResult: ExportResult,
-        output: URL,
+        outputDirectory providedOutputDirectory: URL?,
         preferences preferencesState: SegmentationPreferences.State
     ) {
         defer { cleanupTemporaryDirectory(exportResult.directory) }
@@ -1337,6 +1337,18 @@ After installing the package, re-run the segmentation.
             return
         }
 
+        let outputDirectory: URL
+        do {
+            outputDirectory = try resolveOutputDirectory(using: providedOutputDirectory, exportContext: exportResult)
+        } catch {
+            DispatchQueue.main.async {
+                self.presentAlert(title: "TotalSegmentator", message: error.localizedDescription)
+            }
+            return
+        }
+
+        logToConsole("Using TotalSegmentator output directory at \(outputDirectory.path)")
+
         let bridgeScriptURL: URL
         let configurationURL: URL
 
@@ -1345,7 +1357,7 @@ After installing the package, re-run the segmentation.
             configurationURL = try writeBridgeConfiguration(
                 to: exportResult.directory,
                 dicomDirectory: primarySeries.exportedDirectory,
-                outputDirectory: output,
+                outputDirectory: outputDirectory,
                 outputType: effectiveOutputType.description,
                 totalsegmentatorArguments: totalSegmentatorArguments
             )
@@ -1390,6 +1402,7 @@ After installing the package, re-run the segmentation.
         let seriesCount = exportResult.series.count
         let taskDescriptor = preferencesState.task?.isEmpty == false ? preferencesState.task! : "total"
         progressController.append("Running TotalSegmentator (\(taskDescriptor) task) on \(seriesCount) exported series…")
+        progressController.append("Output directory: \(outputDirectory.path)")
         if let device = preferencesState.device, !device.isEmpty {
             progressController.append("Execution device: \(device).")
         }
@@ -2018,6 +2031,38 @@ if __name__ == "__main__":
         try data.write(to: configurationURL, options: .atomic)
 
         return configurationURL
+    }
+
+    private func resolveOutputDirectory(using providedDirectory: URL?, exportContext: ExportResult) throws -> URL {
+        let fileManager = FileManager.default
+
+        if let provided = providedDirectory {
+            var isDirectory: ObjCBool = false
+            if fileManager.fileExists(atPath: provided.path, isDirectory: &isDirectory) {
+                if !isDirectory.boolValue {
+                    throw NSError(
+                        domain: "org.totalsegmentator.plugin",
+                        code: 1002,
+                        userInfo: [NSLocalizedDescriptionKey: "The selected output path is not a directory."]
+                    )
+                }
+            } else {
+                try fileManager.createDirectory(at: provided, withIntermediateDirectories: true)
+            }
+            return provided
+        }
+
+        let baseName = "segmentation_output"
+        let defaultDirectory = exportContext.directory.appendingPathComponent(baseName, isDirectory: true)
+
+        if !fileManager.fileExists(atPath: defaultDirectory.path) {
+            try fileManager.createDirectory(at: defaultDirectory, withIntermediateDirectories: true)
+            return defaultDirectory
+        }
+
+        let uniqueDirectory = exportContext.directory.appendingPathComponent("\(baseName)_\(UUID().uuidString)", isDirectory: true)
+        try fileManager.createDirectory(at: uniqueDirectory, withIntermediateDirectories: true)
+        return uniqueDirectory
     }
 
     private func normalizeSeriesCollection(_ value: Any?) -> [DicomSeries] {
@@ -2853,10 +2898,14 @@ set_license_number(license_value, skip_validation=skip_validation)
             return
         }
 
+        let semaphore = DispatchSemaphore(value: 0)
+
         DispatchQueue.main.async {
             progressController?.append("Applying RT Struct overlays to the active viewer…")
+
             guard let browser = BrowserController.currentBrowser() else {
                 progressController?.append("Unable to locate the Horos browser to update the viewer.")
+                semaphore.signal()
                 return
             }
 
@@ -2864,6 +2913,7 @@ set_license_number(license_value, skip_validation=skip_validation)
 
             guard let activeViewer = viewer else {
                 progressController?.append("Unable to open a viewer for RT Struct overlay.")
+                semaphore.signal()
                 return
             }
 
@@ -2880,28 +2930,49 @@ set_license_number(license_value, skip_validation=skip_validation)
 
             if appliedOverlayCount == 0 {
                 progressController?.append("No RT Struct overlays could be applied to the active viewer.")
-            } else {
-                self.persistROIs(from: activeViewer)
+                semaphore.signal()
+                return
             }
 
-            if let database = browser.database,
-               let importedObjects = database.objects(withIDs: importResult.importedObjectIDs) as? [NSManagedObject] {
-                let importedSeries = importedObjects.compactMap { $0 as? DicomSeries }
-                let targetSeries = importedSeries.first { series in
-                    guard let modality = series.modality else { return false }
-                    return modality.uppercased() == "RTSTRUCT"
-                } ?? importedSeries.first
+            progressController?.append("Waiting for Horos to finish converting RT Struct overlays into ROIs…")
+            let importedObjectIDs = importResult.importedObjectIDs
 
-                if let series = targetSeries, let study = series.study {
-                    browser.selectStudy(with: study.objectID)
+            DispatchQueue.global(qos: .userInitiated).async {
+                let conversionCompleted = self.waitForRTStructConversionsToFinish(progressController: progressController)
+
+                DispatchQueue.main.async {
+                    if conversionCompleted {
+                        self.reloadROIs(in: activeViewer)
+                        self.persistROIs(from: activeViewer)
+
+                        if let database = browser.database,
+                           let importedObjects = database.objects(withIDs: importedObjectIDs) as? [NSManagedObject] {
+                            let importedSeries = importedObjects.compactMap { $0 as? DicomSeries }
+                            let targetSeries = importedSeries.first { series in
+                                guard let modality = series.modality else { return false }
+                                return modality.uppercased() == "RTSTRUCT"
+                            } ?? importedSeries.first
+
+                            if let series = targetSeries, let study = series.study {
+                                browser.selectStudy(with: study.objectID)
+                            }
+                        }
+
+                        activeViewer.refresh()
+                        activeViewer.window?.makeKeyAndOrderFront(nil)
+                        activeViewer.needsDisplayUpdate()
+                        progressController?.append("Applied \(appliedOverlayCount) RT Struct overlay(s) and stored the corresponding ROIs in Horos.")
+                    } else {
+                        progressController?.append("Timed out while waiting for Horos to finish converting RT Struct overlays.")
+                        self.logToConsole("Timed out while waiting for Horos to convert RT Struct overlays.")
+                    }
+
+                    semaphore.signal()
                 }
             }
-
-            activeViewer.refresh()
-            activeViewer.window?.makeKeyAndOrderFront(nil)
-            activeViewer.needsDisplayUpdate()
-            progressController?.append("Applied \(appliedOverlayCount) RT Struct overlay(s) and stored the corresponding ROIs in Horos.")
         }
+
+        semaphore.wait()
     }
 
     private func openViewer(for exportContext: ExportResult, browser: BrowserController) -> ViewerController? {
@@ -2942,6 +3013,44 @@ set_license_number(license_value, skip_validation=skip_validation)
                     }
                 }
             }
+        }
+
+        return false
+    }
+
+    private func reloadROIs(in viewer: ViewerController) {
+        let maxIndex = Int(viewer.maxMovieIndex())
+        if maxIndex >= 0 {
+            for index in 0...maxIndex {
+                viewer.loadROI(Int(index))
+            }
+        } else {
+            viewer.loadROI(Int(viewer.curMovieIndex()))
+        }
+    }
+
+    private func waitForRTStructConversionsToFinish(
+        progressController: SegmentationProgressWindowController?,
+        timeout: TimeInterval = 120
+    ) -> Bool {
+        guard let manager = ThreadsManager.defaultManager() else {
+            return true
+        }
+
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline {
+            let threadObjects = manager.threads() as? [Any] ?? []
+            let hasConversion = threadObjects.contains { element in
+                guard let thread = element as? Thread, let name = thread.name else { return false }
+                return name.contains("Converting RTSTRUCT in ROIs")
+            }
+
+            if !hasConversion {
+                progressController?.append("ROI conversion completed.")
+                return true
+            }
+
+            Thread.sleep(forTimeInterval: 0.25)
         }
 
         return false

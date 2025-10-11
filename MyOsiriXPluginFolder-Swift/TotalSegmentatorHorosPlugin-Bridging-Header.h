@@ -10,4 +10,5 @@
 #import <Horos/DicomDatabase.h>
 #import <Horos/ViewerController.h>
 #import <Horos/DCMPix.h>
+#import <Horos/ThreadsManager.h>
 #import <DCM/DCMObject.h>
