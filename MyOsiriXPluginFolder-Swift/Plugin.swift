@@ -2848,8 +2848,19 @@ set_license_number(license_value, skip_validation=skip_validation)
                 return
             }
 
+            var appliedOverlayCount = 0
             for path in importResult.rtStructPaths {
-                activeViewer.roiLoad(fromSeries: path)
+                if self.applyRTStructOverlay(from: path, to: activeViewer) {
+                    appliedOverlayCount += 1
+                } else {
+                    let filename = URL(fileURLWithPath: path).lastPathComponent
+                    progressController?.append("Failed to apply RT Struct overlay from \(filename).")
+                    self.logToConsole("Failed to apply RT Struct overlay from \(path)")
+                }
+            }
+
+            if appliedOverlayCount == 0 {
+                progressController?.append("No RT Struct overlays could be applied to the active viewer.")
             }
 
             if let database = browser.database,
@@ -2880,6 +2891,39 @@ set_license_number(license_value, skip_validation=skip_validation)
         }
 
         return nil
+    }
+
+    private func applyRTStructOverlay(from path: String, to viewer: ViewerController) -> Bool {
+        guard let rawObject = DCMObject(contentsOfFile: path, decodingPixelData: false),
+              let dcmObject = rawObject as? DCMObject else {
+            return false
+        }
+
+        if let currentPix = viewer.imageView()?.curDCM {
+            currentPix.createROIsFromRTSTRUCT(dcmObject)
+            return true
+        }
+
+        if let pixList = viewer.pixList() {
+            for case let pix as DCMPix in pixList {
+                pix.createROIsFromRTSTRUCT(dcmObject)
+                return true
+            }
+        }
+
+        let movieCount = Int(viewer.maxMovieIndex())
+        if movieCount >= 0 {
+            for index in 0...movieCount {
+                if let pixList = viewer.pixList(Int32(index)) {
+                    for case let pix as DCMPix in pixList {
+                        pix.createROIsFromRTSTRUCT(dcmObject)
+                        return true
+                    }
+                }
+            }
+        }
+
+        return false
     }
 
     private func persistAuditMetadata(

@@ -8,3 +8,6 @@
 #import <Horos/DicomSeries.h>
 #import <Horos/DicomFile.h>
 #import <Horos/DicomDatabase.h>
+#import <Horos/ViewerController.h>
+#import <Horos/DCMPix.h>
+#import <DCM/DCMObject.h>
