@@ -167,7 +167,7 @@ class TotalSegmentatorHorosPlugin: PluginFilter {
         case runSegmentation = "Run TotalSegmentator"
     }
 
-    private let preferences = SegmentationPreferences()
+    let preferences = SegmentationPreferences()
     private var progressWindowController: SegmentationProgressWindowController?
     private var setupProgressWindowController: SegmentationProgressWindowController?
     private let auditQueue = DispatchQueue(label: "org.totalsegmentator.horos.audit", qos: .utility)
@@ -231,6 +231,7 @@ class TotalSegmentatorHorosPlugin: PluginFilter {
     ]
 
     override func filterImage(_ menuName: String!) -> Int {
+        logToConsole("filterImage invoked for menu action: \(menuName ?? "nil")")
         guard let menuName = menuName,
               let action = MenuAction(rawValue: menuName) else {
             NSLog("TotalSegmentatorHorosPlugin received unsupported menu action: %@", menuName ?? "nil")
@@ -246,6 +247,10 @@ class TotalSegmentatorHorosPlugin: PluginFilter {
         }
 
         return 0
+    }
+
+    override func setMenus() {
+        super.setMenus()
     }
 
     override func toolbarAllowedIdentifiers(forViewer controller: Any!) -> [Any]! {
@@ -344,6 +349,13 @@ class TotalSegmentatorHorosPlugin: PluginFilter {
         item.target = self
         item.action = #selector(runSegmentationFromToolbar(_:))
         return item
+    }
+
+    private func currentViewerController() -> ViewerController? {
+        if responds(to: Selector(("viewerController"))) {
+            return self.value(forKey: "viewerController") as? ViewerController
+        }
+        return nil
     }
 
     @IBAction private func browseForExecutable(_ sender: Any) {
@@ -585,12 +597,17 @@ else:
         return normalized.hasPrefix("total")
     }
 
-    private func performInitialSetupIfNeeded() {
+    private func performInitialSetupIfNeeded(displayProgress: Bool = false) {
         autoreleasepool {
             var preferencesState = preferences.effectivePreferences()
             var updatedPreferences = preferencesState
 
+            let progressController: SegmentationProgressWindowController? = displayProgress ? presentSetupProgressWindowIfNeeded(initialMessage: "Preparing TotalSegmentator environment…") : nil
+
             guard var executableResolution = resolvePythonInterpreter(using: preferencesState) else {
+                if displayProgress {
+                    finishSetupProgress(with: nil)
+                }
                 presentEnvironmentSetupFailureInstructions()
                 return
             }
@@ -598,7 +615,7 @@ else:
             if !pythonModuleAvailable("totalsegmentator", using: executableResolution) {
                 logToConsole("TotalSegmentator module not found. Attempting to create a managed virtual environment.")
 
-                if let managed = bootstrapManagedPythonEnvironment(baseResolution: executableResolution) {
+                if let managed = bootstrapManagedPythonEnvironment(baseResolution: executableResolution, progressController: progressController) {
                     executableResolution = managed.resolution
                     updatedPreferences.executablePath = managed.pythonPath
                     preferences.store(updatedPreferences)
@@ -608,26 +625,34 @@ else:
                         self?.executablePathField?.stringValue = managed.pythonPath
                     }
                 } else {
-                    finishSetupProgress(with: nil)
+                    if displayProgress {
+                        finishSetupProgress(with: nil)
+                    }
                     presentEnvironmentSetupFailureInstructions()
                     return
                 }
             }
 
             guard pythonModuleAvailable("totalsegmentator", using: executableResolution) else {
-                finishSetupProgress(with: nil)
+                if displayProgress {
+                    finishSetupProgress(with: nil)
+                }
                 presentEnvironmentSetupFailureInstructions()
                 return
             }
 
-            let setupSucceeded = ensureTotalSegmentatorSetup(using: executableResolution)
+            let setupSucceeded = ensureTotalSegmentatorSetup(using: executableResolution, progressController: progressController)
             if !setupSucceeded {
-                finishSetupProgress(with: "TotalSegmentator setup encountered issues. Please review the log output.")
+                if displayProgress {
+                    finishSetupProgress(with: "TotalSegmentator setup encountered issues. Please review the log output.")
+                }
                 return
             }
 
-            guard let dcm2niixPath = ensureDcm2Niix(using: executableResolution) else {
-                finishSetupProgress(with: "Unable to prepare dcm2niix. Please review the displayed instructions.")
+            guard let dcm2niixPath = ensureDcm2Niix(using: executableResolution, progressController: progressController) else {
+                if displayProgress {
+                    finishSetupProgress(with: "Unable to prepare dcm2niix. Please review the displayed instructions.")
+                }
                 return
             }
 
@@ -636,33 +661,21 @@ else:
                 preferences.store(updatedPreferences)
             }
 
-            finishSetupProgress(with: "Initial setup complete.")
+            if displayProgress {
+                finishSetupProgress(with: "Initial setup complete.")
+            }
         }
     }
 
     private func presentSetupProgressWindowIfNeeded(initialMessage: String? = nil) -> SegmentationProgressWindowController {
-        if let controller = setupProgressWindowController {
-            if let message = initialMessage {
-                DispatchQueue.main.async {
-                    controller.append(message)
-                }
-            }
-            return controller
+        if Thread.isMainThread {
+            return presentSetupProgressWindowOnMain(initialMessage: initialMessage)
         }
 
-        let controller = SegmentationProgressWindowController()
-        setupProgressWindowController = controller
-
-        DispatchQueue.main.async {
-            controller.showWindow(nil)
-            controller.start()
-            if let message = initialMessage {
-                controller.append(message)
-            } else {
-                controller.append("Preparing TotalSegmentator environment…")
-            }
+        var controller: SegmentationProgressWindowController!
+        DispatchQueue.main.sync {
+            controller = self.presentSetupProgressWindowOnMain(initialMessage: initialMessage)
         }
-
         return controller
     }
 
@@ -674,10 +687,35 @@ else:
                 controller.append(message)
             }
             controller.markProcessFinished()
-            controller.close(after: 2.0)
+            controller.close(after: 0.1)
+            self.logToConsole("Progress window closed")
         }
 
         setupProgressWindowController = nil
+    }
+
+    private func presentSetupProgressWindowOnMain(initialMessage: String?) -> SegmentationProgressWindowController {
+        precondition(Thread.isMainThread, "UI work must happen on main thread")
+
+        if let controller = setupProgressWindowController {
+            if let message = initialMessage {
+                controller.append(message)
+            }
+            return controller
+        }
+
+        let controller = SegmentationProgressWindowController()
+        setupProgressWindowController = controller
+
+        controller.showWindow(nil)
+        controller.start()
+        if let message = initialMessage {
+            controller.append(message)
+        } else {
+            controller.append("Preparing TotalSegmentator environment…")
+        }
+
+        return controller
     }
 
     private func pythonModuleAvailable(_ moduleName: String, using resolution: ExecutableResolution) -> Bool {
@@ -795,7 +833,8 @@ sys.exit(0 if spec is not None else 1)
     }
 
     private func bootstrapManagedPythonEnvironment(
-        baseResolution: ExecutableResolution
+        baseResolution: ExecutableResolution,
+        progressController: SegmentationProgressWindowController?
     ) -> (resolution: ExecutableResolution, pythonPath: String)? {
         guard let environmentDirectory = managedEnvironmentDirectory() else {
             logToConsole("Failed to resolve a location for the managed Python environment.")
@@ -808,17 +847,15 @@ sys.exit(0 if spec is not None else 1)
         let fileManager = FileManager.default
 
         if !fileManager.fileExists(atPath: python3URL.path) && !fileManager.fileExists(atPath: pythonURL.path) {
-            let controller = presentSetupProgressWindowIfNeeded(initialMessage: "Creating managed Python environment…")
+            progressController?.append("Creating managed Python environment…")
             let result = runPythonProcess(
                 using: baseResolution,
                 arguments: ["-m", "venv", environmentDirectory.path],
-                progressController: controller
+                progressController: progressController
             )
 
             if result.terminationStatus != 0 || result.error != nil {
-                DispatchQueue.main.async {
-                    controller.append("Failed to create the virtual environment. Please review the console output.")
-                }
+                progressController?.append("Failed to create the virtual environment. Please review the console output.")
                 logToConsole("Failed to create virtual environment: status=\(result.terminationStatus)")
                 return nil
             }
@@ -847,18 +884,18 @@ sys.exit(0 if spec is not None else 1)
         let managedResolution: ExecutableResolution = (pythonBinary, [], environment)
 
         if !pythonModuleAvailable("totalsegmentator", using: managedResolution) {
-            let controller = presentSetupProgressWindowIfNeeded(initialMessage: "Installing TotalSegmentator into managed environment…")
+            progressController?.append("Installing TotalSegmentator into managed environment…")
 
             _ = runPythonProcess(
                 using: managedResolution,
                 arguments: ["-m", "pip", "install", "--upgrade", "pip"],
-                progressController: controller
+                progressController: progressController
             )
 
             let installResult = runPythonProcess(
                 using: managedResolution,
                 arguments: ["-m", "pip", "install", "--upgrade", "TotalSegmentator"],
-                progressController: controller
+                progressController: progressController
             )
 
             if installResult.terminationStatus != 0 || installResult.error != nil {
@@ -894,22 +931,36 @@ sys.exit(0 if spec is not None else 1)
         return environmentDirectory
     }
 
-    private func ensureTotalSegmentatorSetup(using resolution: ExecutableResolution) -> Bool {
-        let controller = presentSetupProgressWindowIfNeeded(initialMessage: "Ensuring TotalSegmentator configuration and weights are available…")
+    private func ensureTotalSegmentatorSetup(using resolution: ExecutableResolution, progressController: SegmentationProgressWindowController?) -> Bool {
+        progressController?.append("Ensuring TotalSegmentator configuration and weights are available…")
 
         let script = """
 import json
+import subprocess
+import sys
 from totalsegmentator.python_api import setup_totalseg, setup_nnunet
 
 setup_totalseg()
 setup_nnunet()
+
+requirements = {
+    "pydicom": "pydicom",
+    "dicom2nifti": "dicom2nifti"
+}
+
+for module_name, package_name in requirements.items():
+    try:
+        __import__(module_name)
+    except ImportError:
+        subprocess.check_call([sys.executable, "-m", "pip", "install", package_name])
+
 print("__RESULT__" + json.dumps({"status": "ok"}))
 """
 
         let result = runPythonProcess(
             using: resolution,
             arguments: ["-c", script],
-            progressController: controller
+            progressController: progressController
         )
 
         if let error = result.error {
@@ -923,20 +974,16 @@ print("__RESULT__" + json.dumps({"status": "ok"}))
         }
 
         if let dictionary = extractResultDictionary(from: result.stdout), dictionary["status"] as? String == "ok" {
-            DispatchQueue.main.async {
-                controller.append("TotalSegmentator setup finished successfully.")
-            }
+            progressController?.append("TotalSegmentator setup finished successfully.")
         } else {
-            DispatchQueue.main.async {
-                controller.append("TotalSegmentator setup finished.")
-            }
+            progressController?.append("TotalSegmentator setup finished.")
         }
 
         return true
     }
 
-    private func ensureDcm2Niix(using resolution: ExecutableResolution) -> String? {
-        let controller = presentSetupProgressWindowIfNeeded(initialMessage: "Checking for dcm2niix availability…")
+    private func ensureDcm2Niix(using resolution: ExecutableResolution, progressController: SegmentationProgressWindowController?) -> String? {
+        progressController?.append("Checking for dcm2niix availability…")
 
         let script = """
 import json
@@ -982,7 +1029,7 @@ print("__RESULT__" + json.dumps({"path": result}))
         let result = runPythonProcess(
             using: resolution,
             arguments: ["-c", script],
-            progressController: controller
+            progressController: progressController
         )
 
         if let error = result.error {
@@ -1000,13 +1047,11 @@ print("__RESULT__" + json.dumps({"path": result}))
            let dictionary = extractResultDictionary(from: result.stdout),
            let path = dictionary["path"] as? String,
            !path.isEmpty {
-            DispatchQueue.main.async {
-                controller.append("dcm2niix available at: \(path)")
-            }
+            progressController?.append("dcm2niix available at: \(path)")
             return path
         }
 
-        if let fallbackPath = attemptLocalDcm2NiixBootstrap(progressController: controller) {
+        if let fallbackPath = attemptLocalDcm2NiixBootstrap(progressController: progressController) {
             return fallbackPath
         }
 
@@ -1227,13 +1272,16 @@ After installing the package, re-run the segmentation.
     }
 
     private func startSegmentationFlow() {
-        guard let viewer = ViewerController.frontMostDisplayed2DViewer() else {
+        logToConsole("startSegmentationFlow called")
+        guard let viewer = currentViewerController() ?? ViewerController.frontMostDisplayed2DViewer() else {
             presentAlert(title: "TotalSegmentator", message: "No active viewer is available.")
+            logToConsole("startSegmentationFlow aborted: no 2D viewer available.")
             return
         }
 
         guard let presentingWindow = viewer.window else {
             presentAlert(title: "TotalSegmentator", message: "Unable to locate the active viewer window.")
+            logToConsole("startSegmentationFlow aborted: viewer window not found.")
             return
         }
 
@@ -1242,6 +1290,7 @@ After installing the package, re-run the segmentation.
             exportResult = try exportActiveSeries(from: viewer)
         } catch {
             presentAlert(title: "TotalSegmentator", message: error.localizedDescription)
+            logToConsole("startSegmentationFlow aborted during export: \(error.localizedDescription)")
             return
         }
 
@@ -1303,6 +1352,8 @@ After installing the package, re-run the segmentation.
         preferences preferencesState: SegmentationPreferences.State
     ) {
         defer { cleanupTemporaryDirectory(exportResult.directory) }
+
+        performInitialSetupIfNeeded(displayProgress: true)
 
         guard let executableResolution = resolvePythonInterpreter(using: preferencesState) else {
             DispatchQueue.main.async {
@@ -3238,5 +3289,11 @@ extension TotalSegmentatorHorosPlugin: NSWindowDelegate {
         }
 
         persistPreferencesFromUI()
+    }
+}
+
+extension TotalSegmentatorHorosPlugin: NSMenuItemValidation {
+    func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
+        return true
     }
 }

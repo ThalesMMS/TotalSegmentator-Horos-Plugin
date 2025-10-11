@@ -135,6 +135,9 @@ final class SegmentationProgressWindowController: NSWindowController {
         scrollView.documentView = textView
         scrollView.borderType = .bezelBorder
 
+        textView.backgroundColor = NSColor.textBackgroundColor
+        textView.textColor = NSColor.labelColor
+
         contentView.addSubview(scrollView)
         contentView.addSubview(progressIndicator)
         contentView.addSubview(cancelButton)
