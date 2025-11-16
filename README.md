@@ -57,8 +57,8 @@ To install, copy the downloaded `.osirixplugin` bundle into `~/Library/Applicati
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/ThalesMMS/TotalSegmentator.git
-   cd TotalSegmentator
+   git clone https://github.com/ThalesMMS/TotalSegmentator-Horos-Plugin.git
+   cd TotalSegmentator-Horos-Plugin
    ```
 
 2. **Build the plugin**
