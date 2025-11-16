@@ -57,7 +57,7 @@ To install, copy the downloaded `.osirixplugin` bundle into `~/Library/Applicati
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/<your-username>/TotalSegmentator.git
+   git clone https://github.com/ThalesMMS/TotalSegmentator.git
    cd TotalSegmentator
    ```
 
