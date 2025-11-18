@@ -20,7 +20,29 @@ from totalsegmentator.map_to_total import map_to_total
 import re
 
 
-def validate_device_type_api(value):
+def validate_device_type_api(value: str) -> str:
+    """
+    Validate device type string for TotalSegmentator API.
+
+    Args:
+        value: Device type string to validate
+
+    Returns:
+        Validated device type string
+
+    Raises:
+        ValueError: If device type is invalid
+
+    Examples:
+        >>> validate_device_type_api("gpu")
+        'gpu'
+        >>> validate_device_type_api("gpu:0")
+        'gpu:0'
+        >>> validate_device_type_api("invalid")
+        Traceback (most recent call last):
+        ...
+        ValueError: Invalid device type: 'invalid'. Must be 'gpu', 'cpu', 'mps', or 'gpu:X' where X is an integer representing the GPU device ID.
+    """
     valid_strings = ["gpu", "cpu", "mps"]
     if value in valid_strings:
         return value
@@ -36,29 +58,80 @@ def validate_device_type_api(value):
         f"Invalid device type: '{value}'. Must be 'gpu', 'cpu', 'mps', or 'gpu:X' where X is an integer representing the GPU device ID.")
 
 
-def convert_device_to_cuda(device):
+def convert_device_to_cuda(device: str) -> str:
+    """
+    Convert device string from API format to CUDA format.
+
+    Args:
+        device: Device string in format 'gpu', 'cpu', 'mps', or 'gpu:X'
+
+    Returns:
+        Device string in CUDA format ('cuda:X' for GPUs, unchanged otherwise)
+
+    Examples:
+        >>> convert_device_to_cuda("gpu")
+        'gpu'
+        >>> convert_device_to_cuda("gpu:1")
+        'cuda:1'
+    """
     if device in ["cpu", "mps", "gpu"]:
         return device
     else:  # gpu:X
         return f"cuda:{device.split(':')[1]}"
 
 
-def convert_device_to_string(device):
+def convert_device_to_string(device) -> str:
+    """
+    Convert torch.device object to string representation.
+
+    Args:
+        device: torch.device object or string
+
+    Returns:
+        String representation of device ('gpu' for CUDA, type otherwise)
+
+    Examples:
+        >>> import torch
+        >>> convert_device_to_string(torch.device('cuda:0'))
+        'gpu'
+        >>> convert_device_to_string(torch.device('cpu'))
+        'cpu'
+    """
     if hasattr(device, 'type'):  # torch.device object
         if device.type == "cuda":
             return "gpu"
         else:
             return device.type
+    return str(device)
 
 
-def select_device(device):
+def select_device(device: str) -> Union[str, torch.device]:
+    """
+    Select and validate the computation device.
+
+    Converts device string to appropriate torch.device, falling back to CPU
+    if requested GPU is unavailable.
+
+    Args:
+        device: Device string ('gpu', 'cpu', 'mps', or 'gpu:X')
+
+    Returns:
+        Validated device (torch.device for CUDA, string for CPU/MPS)
+
+    Examples:
+        >>> select_device("cpu")
+        'cpu'
+        >>> select_device("gpu")  # doctest: +SKIP
+        device(type='cuda', index=0)
+    """
     device = convert_device_to_cuda(device)
 
     # available devices: gpu | cpu | mps | gpu:1, gpu:2, etc.
-    if device == "gpu": 
+    if device == "gpu":
         device = "cuda"
-    if device.startswith("cuda"): 
-        if device == "cuda": device = "cuda:0"
+    if device.startswith("cuda"):
+        if device == "cuda":
+            device = "cuda:0"
         if not torch.cuda.is_available():
             print("No GPU detected. Running on CPU. This can be very slow. The '--fast' or the `--roi_subset` option can help to reduce runtime.")
             device = "cpu"
@@ -67,7 +140,7 @@ def select_device(device):
             if device_id < torch.cuda.device_count():
                 device = torch.device(device)
             else:
-                print("Invalid GPU config, running on the CPU")
+                print(f"Invalid GPU config (requested GPU {device_id}, but only {torch.cuda.device_count()} GPU(s) available), running on CPU")
                 device = "cpu"
     return device
 
@@ -161,7 +234,6 @@ def totalsegmentator(input: Union[str, Path, Nifti1Image], output: Union[str, Pa
             task_id = 297
             resample = 3.0
             trainer = "nnUNetTrainer_4000epochs_NoMirroring"
-            # trainer = "nnUNetTrainerNoMirroring"
             crop = None
             if not quiet: print("Using 'fast' option: resampling to lower resolution (3mm)")
         elif fastest:
@@ -174,33 +246,15 @@ def totalsegmentator(input: Union[str, Path, Nifti1Image], output: Union[str, Pa
             task_id = [291, 292, 293, 294, 295]
             resample = 1.5
             trainer = "nnUNetTrainerNoMirroring"
-            # trainer = "nnUNetTrainer_DASegOrd0_NoMirroring"
             crop = None
         model = "3d_fullres"
         folds = [0]
-    # todo: add to download and preview
-    # elif task == "total_highres_test":
-    #     # task_id = 955
-    #     task_id = 956
-    #     # resample = [0.75, 0.75, 1.0]
-    #     resample = [0.78125, 0.78125, 1.0]
-    #     trainer = "nnUNetTrainer_DASegOrd0_NoMirroring"
-    #     crop_addon = [30, 30, 30]
-    #     crop = ["liver", "spleen", "colon", "small_bowel", "stomach", "lung_upper_lobe_left", "lung_upper_lobe_right", "aorta"] # abdomen_thorax
-    #     # model = "3d_fullres_high"
-    #     # model = "3d_fullres_high_bigPS"
-    #     model = "3d_fullres"
-    #     cascade = True
-    #     folds = [0]
     elif task == "total_highres_test":
         task_id = 957
         resample = [0.75, 0.75, 1.0]
         trainer = "nnUNetTrainerNoMirroring"
-        # crop_addon = [30, 30, 30]
-        # crop = ["liver", "spleen", "colon", "small_bowel", "stomach", "lung_upper_lobe_left", "lung_upper_lobe_right", "aorta"] # abdomen_thorax
         crop = None
         model = "3d_fullres_high"
-        # model = "3d_fullres_high_bigPS"
         cascade = False
         folds = [0]
     elif task == "total_mr":
@@ -208,7 +262,6 @@ def totalsegmentator(input: Union[str, Path, Nifti1Image], output: Union[str, Pa
             task_id = 852
             resample = 3.0
             trainer = "nnUNetTrainer_2000epochs_NoMirroring"
-            # trainer = "nnUNetTrainerNoMirroring"
             crop = None
             if not quiet: print("Using 'fast' option: resampling to lower resolution (3mm)")
         elif fastest:
@@ -230,20 +283,10 @@ def totalsegmentator(input: Union[str, Path, Nifti1Image], output: Union[str, Pa
         trainer = "nnUNetTrainer"
         crop = ["lung_upper_lobe_left", "lung_lower_lobe_left", "lung_upper_lobe_right",
                 "lung_middle_lobe_right", "lung_lower_lobe_right"]
-        # if ml: raise ValueError("task lung_vessels does not work with option --ml, because of postprocessing.")
-        if fast: raise ValueError("task lung_vessels does not work with option --fast")
+        if fast:
+            raise ValueError("task lung_vessels does not work with option --fast")
         model = "3d_fullres"
         folds = [0]
-    # elif task == "covid":
-    #     task_id = 201
-    #     resample = None
-    #     trainer = "nnUNetTrainer"
-    #     crop = ["lung_upper_lobe_left", "lung_lower_lobe_left", "lung_upper_lobe_right",
-    #             "lung_middle_lobe_right", "lung_lower_lobe_right"]
-    #     model = "3d_fullres"
-    #     folds = [0]
-    #     print("WARNING: The COVID model finds many types of lung opacity not only COVID. Use with care!")
-    #     if fast: raise ValueError("task covid does not work with option --fast")
     elif task == "cerebral_bleed":
         task_id = 150
         resample = None

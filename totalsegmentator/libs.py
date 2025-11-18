@@ -23,30 +23,71 @@ Helpers to suppress stdout prints from nnunet
 https://stackoverflow.com/questions/2828953/silence-the-stdout-of-a-function-in-python-without-trashing-sys-stdout-and-resto
 """
 class DummyFile:
-    def write(self, x): pass
-    def flush(self): pass
+    """Dummy file object that discards all writes."""
+    def write(self, x: str) -> None:
+        """Discard written content."""
+        pass
+
+    def flush(self) -> None:
+        """No-op flush operation."""
+        pass
 
 @contextlib.contextmanager
-def nostdout(verbose=False):
+def nostdout(verbose: bool = False):
+    """
+    Context manager to suppress stdout output.
+
+    Args:
+        verbose: If True, output is not suppressed. If False, stdout is redirected to DummyFile.
+
+    Yields:
+        None
+
+    Example:
+        >>> with nostdout():
+        ...     print("This won't be displayed")
+    """
     if not verbose:
         save_stdout = sys.stdout
         sys.stdout = DummyFile()
-        yield
-        sys.stdout = save_stdout
+        try:
+            yield
+        finally:
+            sys.stdout = save_stdout
     else:
         yield
 
 
-def download_model_with_license_and_unpack(task_name, config_dir):
+def download_model_with_license_and_unpack(task_name: str, config_dir: Path) -> bool:
+    """
+    Download model weights with license validation and extract to config directory.
+
+    Args:
+        task_name: Name of the segmentation task
+        config_dir: Directory where model weights will be extracted
+
+    Returns:
+        True if download and extraction succeeded, False otherwise
+
+    Raises:
+        requests.exceptions.RequestException: If download fails
+        zipfile.BadZipFile: If extraction fails
+        KeyError: If license configuration is malformed
+    """
     # Get License Number
     totalseg_dir = get_totalseg_dir()
     totalseg_config_file = totalseg_dir / "config.json"
-    if totalseg_config_file.exists():
+
+    if not totalseg_config_file.exists():
+        print(f"ERROR: Could not find config file: {totalseg_config_file}")
+        return False
+
+    try:
         with open(totalseg_config_file) as f:
             config = json.load(f)
         license_number = config["license_number"]
-    else:
-        print(f"ERROR: Could not find config file: {totalseg_config_file}")
+    except (json.JSONDecodeError, KeyError) as e:
+        print(f"ERROR: Invalid config file format: {e}")
         return False
 
     tempfile = config_dir / "tmp_download_file.zip"
@@ -65,9 +106,6 @@ def download_model_with_license_and_unpack(task_name, config_dir):
 
         if r.ok:
             with open(tempfile, "wb") as f:
-                # without progress bar
-                # f.write(r.content)
-
                 total_size = int(r.headers.get('content-length', 0))
                 progress_bar = tqdm(total=total_size, unit='B', unit_scale=True, desc="Downloading")
                 for chunk in r.iter_content(chunk_size=8192 * 16):
@@ -78,14 +116,20 @@ def download_model_with_license_and_unpack(task_name, config_dir):
             print("Download finished. Extracting...")
             with zipfile.ZipFile(config_dir / "tmp_download_file.zip", 'r') as zip_f:
                 zip_f.extractall(config_dir)
-            # print(f"  downloaded in {time.time()-st:.2f}s")
+            return True
         else:
-            if r.json()['status'] == "invalid_license":
+            response_data = r.json()
+            if response_data.get('status') == "invalid_license":
                 print(f"ERROR: Invalid license number ({license_number}). Please check your license number or contact support.")
                 sys.exit(1)
+            return False
 
-    except Exception as e:
-        raise e
+    except requests.exceptions.RequestException as e:
+        print(f"ERROR: Failed to download model: {e}")
+        raise
+    except zipfile.BadZipFile as e:
+        print(f"ERROR: Failed to extract model archive: {e}")
+        raise
     finally:
         if tempfile.exists():
             os.remove(tempfile)
@@ -243,13 +287,13 @@ def download_pretrained_weights(task_id):
         WEIGHTS_URL = url + "/v2.5.0-weights/Dataset552_ventricle_parts_38subj.zip"
     elif task_id == 955:
         weights_path = config_dir / "Dataset955_TotalSegmentator_highres_part1_organs_110subj"
-        WEIGHTS_URL = "TODO"
+        WEIGHTS_URL = None  # Not yet available for public download
     elif task_id == 956:
         weights_path = config_dir / "Dataset956_TotalSegmentator_highres_part1_organs_cascade_110subj"
-        WEIGHTS_URL = "TODO"
+        WEIGHTS_URL = None  # Not yet available for public download
     elif task_id == 957:
         weights_path = config_dir / "Dataset957_TotalSegmentator_highres_part1_organs_cropBody_127subj"
-        WEIGHTS_URL = "TODO"
+        WEIGHTS_URL = None  # Not yet available for public download
                 
     # MR models
     elif task_id == 850:
@@ -282,13 +326,10 @@ def download_pretrained_weights(task_id):
         WEIGHTS_URL = url + "/v2.0.0-weights/Dataset258_lung_vessels_248subj.zip"
     elif task_id == 200:
         weights_path = config_dir / "Task200_covid_challenge"
-        WEIGHTS_URL = "TODO"
+        WEIGHTS_URL = None  # Not yet available for public download
     elif task_id == 201:
         weights_path = config_dir / "Task201_covid"
-        WEIGHTS_URL = "TODO"
-    # elif task_id == 152:
-    #     weights_path = config_dir / "Task152_icbbig_TN"
-    #     WEIGHTS_URL = "TODO"
+        WEIGHTS_URL = None  # Not yet available for public download
     elif task_id == 150:
         weights_path = config_dir / "Dataset150_icb_v0"
         # WEIGHTS_URL = "https://zenodo.org/record/7079161/files/Task150_icb_v0.zip?download=1"

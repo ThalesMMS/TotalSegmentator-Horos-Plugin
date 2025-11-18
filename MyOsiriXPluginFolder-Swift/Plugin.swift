@@ -1,20 +1,36 @@
 import Cocoa
 import CoreData
 
+// MARK: - Type Aliases
+
+/// Result of executable resolution containing the URL, arguments, and environment variables.
 private typealias ExecutableResolution = (executableURL: URL, leadingArguments: [String], environment: [String: String]?)
 
+// MARK: - Process Execution
+
+/// Result of a process execution containing status code, output streams, and any errors.
 private struct ProcessExecutionResult {
+    /// Process termination status code (0 indicates success).
     let terminationStatus: Int32
+    /// Standard output data from the process.
     let stdout: Data
+    /// Standard error data from the process.
     let stderr: Data
+    /// Any error that occurred during execution.
     let error: Error?
 }
 
+/// Supported output formats for segmentation results.
 private enum SegmentationOutputType: Equatable {
+    /// DICOM RT-Struct format (default).
     case dicom
+    /// NIfTI format (.nii or .nii.gz).
     case nifti
+    /// Other/unsupported format.
     case other(String?)
 
+    /// Initialize from command-line argument value.
+    /// - Parameter argumentValue: Output type string from user input.
     init(argumentValue: String?) {
         guard let normalized = argumentValue?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased(), !normalized.isEmpty else {
             self = .dicom
@@ -31,6 +47,7 @@ private enum SegmentationOutputType: Equatable {
         }
     }
 
+    /// String representation of the output type.
     var description: String {
         switch self {
         case .dicom:
@@ -43,24 +60,39 @@ private enum SegmentationOutputType: Equatable {
     }
 }
 
+/// Metadata for an exported DICOM series.
 private struct ExportedSeries {
+    /// The original DICOM series object from Horos.
     let series: DicomSeries
+    /// DICOM modality (e.g., "CT", "MR").
     let modality: String
+    /// Directory where files were exported.
     let exportedDirectory: URL
+    /// List of exported DICOM file URLs.
     let exportedFiles: [URL]
+    /// DICOM Series Instance UID.
     let seriesInstanceUID: String?
+    /// DICOM Study Instance UID.
     let studyInstanceUID: String?
 }
 
+/// Result of exporting DICOM series to disk.
 private struct ExportResult {
+    /// Root directory containing all exports.
     let directory: URL
+    /// List of exported series with metadata.
     let series: [ExportedSeries]
 }
 
+/// Result of importing segmentation files into Horos database.
 private struct SegmentationImportResult {
+    /// File paths that were successfully added.
     let addedFilePaths: [String]
+    /// Paths to RT-Struct DICOM files.
     let rtStructPaths: [String]
+    /// Core Data object IDs of imported objects.
     let importedObjectIDs: [NSManagedObjectID]
+    /// Output type that was imported.
     let outputType: SegmentationOutputType
 }
 
