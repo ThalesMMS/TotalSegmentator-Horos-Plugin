@@ -15,6 +15,10 @@
 		D2D8D2062AF5A9D200AAA111 /* TotalSegmentatorToolbar.png in Resources */ = {isa = PBXBuildFile; fileRef = D2D8D2072AF5A9D200AAA111 /* TotalSegmentatorToolbar.png */; };
 		D2D8D2092AF5B3B400AAA111 /* ClassSelectionWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2D8D2082AF5B3B400AAA111 /* ClassSelectionWindowController.swift */; };
 		D2D8D20B2AF5B3CF00AAA111 /* SegmentationProgressWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2D8D20A2AF5B3CF00AAA111 /* SegmentationProgressWindowController.swift */; };
+		E1A1A10000000001 /* ProcessExecutor.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1A1A10000000002 /* ProcessExecutor.swift */; };
+		E1A1A10000000003 /* DicomExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1A1A10000000004 /* DicomExporter.swift */; };
+		E1A1A10000000005 /* AuditLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1A1A10000000006 /* AuditLogger.swift */; };
+		E1A1A10000000007 /* PluginUtilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1A1A10000000008 /* PluginUtilities.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -28,6 +32,10 @@
 		D2D8D2072AF5A9D200AAA111 /* TotalSegmentatorToolbar.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = TotalSegmentatorToolbar.png; sourceTree = "<group>"; };
 		D2D8D2082AF5B3B400AAA111 /* ClassSelectionWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClassSelectionWindowController.swift; sourceTree = "<group>"; };
 		D2D8D20A2AF5B3CF00AAA111 /* SegmentationProgressWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SegmentationProgressWindowController.swift; sourceTree = "<group>"; };
+		E1A1A10000000002 /* ProcessExecutor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProcessExecutor.swift; sourceTree = "<group>"; };
+		E1A1A10000000004 /* DicomExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DicomExporter.swift; sourceTree = "<group>"; };
+		E1A1A10000000006 /* AuditLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuditLogger.swift; sourceTree = "<group>"; };
+		E1A1A10000000008 /* PluginUtilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PluginUtilities.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -47,6 +55,10 @@
 			children = (
 				CEC0F6E928BF45CD003DD38F /* Horos.framework */,
 				CEC0F6F128BF8DF5003DD38F /* Plugin.swift */,
+				E1A1A10000000002 /* ProcessExecutor.swift */,
+				E1A1A10000000004 /* DicomExporter.swift */,
+				E1A1A10000000006 /* AuditLogger.swift */,
+				E1A1A10000000008 /* PluginUtilities.swift */,
 				D2D8D2022AF5A00100AAA111 /* RunSegmentationWindowController.swift */,
 				D2D8D2082AF5B3B400AAA111 /* ClassSelectionWindowController.swift */,
 				D2D8D20A2AF5B3CF00AAA111 /* SegmentationProgressWindowController.swift */,
@@ -141,6 +153,10 @@
 				D2D8D20B2AF5B3CF00AAA111 /* SegmentationProgressWindowController.swift in Sources */,
 				D2D8D2052AF5A00100AAA111 /* RunSegmentationWindowController.swift in Sources */,
 				CEC0F6F228BF8DF5003DD38F /* Plugin.swift in Sources */,
+				E1A1A10000000001 /* ProcessExecutor.swift in Sources */,
+				E1A1A10000000003 /* DicomExporter.swift in Sources */,
+				E1A1A10000000005 /* AuditLogger.swift in Sources */,
+				E1A1A10000000007 /* PluginUtilities.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
