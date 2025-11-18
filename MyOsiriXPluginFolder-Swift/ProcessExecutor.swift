@@ -121,14 +121,25 @@ final class ProcessExecutor {
 
     /// Check if a Python module is available in the given environment.
     ///
+    /// Uses `importlib.util.find_spec` for robust module detection.
+    ///
     /// - Parameters:
     ///   - moduleName: Name of the Python module to check
     ///   - resolution: The executable resolution to use
     /// - Returns: True if the module is available
     func pythonModuleAvailable(_ moduleName: String, using resolution: ExecutableResolution) -> Bool {
+        let script = """
+import importlib.util
+import sys
+
+module = sys.argv[1]
+spec = importlib.util.find_spec(module)
+sys.exit(0 if spec is not None else 1)
+"""
+
         let process = Process()
         process.executableURL = resolution.executableURL
-        process.arguments = resolution.leadingArguments + ["-c", "import \(moduleName)"]
+        process.arguments = resolution.leadingArguments + ["-c", script, moduleName]
 
         var environment = ProcessInfo.processInfo.environment
         if let baseEnvironment = resolution.environment {

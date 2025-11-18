@@ -654,27 +654,7 @@ else:
     }
 
     private func pythonModuleAvailable(_ moduleName: String, using resolution: ExecutableResolution) -> Bool {
-        let script = """
-import importlib.util
-import sys
-
-module = sys.argv[1]
-spec = importlib.util.find_spec(module)
-sys.exit(0 if spec is not None else 1)
-"""
-
-        let result = runPythonProcess(
-            using: resolution,
-            arguments: ["-c", script, moduleName],
-            progressController: nil
-        )
-
-        if let error = result.error {
-            logToConsole("Python execution failed while probing module '\(moduleName)': \(error.localizedDescription)")
-            return false
-        }
-
-        return result.terminationStatus == 0
+        return ProcessExecutor.shared.pythonModuleAvailable(moduleName, using: resolution)
     }
 
     private func runPythonProcess(
@@ -683,88 +663,14 @@ sys.exit(0 if spec is not None else 1)
         environment customEnvironment: [String: String]? = nil,
         progressController: SegmentationProgressWindowController?
     ) -> ProcessExecutionResult {
-        let process = Process()
-        process.executableURL = resolution.executableURL
-        process.arguments = resolution.leadingArguments + arguments
-
-        var environment = ProcessInfo.processInfo.environment
-        environment["PYTHONUNBUFFERED"] = "1"
-
-        if let baseEnvironment = resolution.environment {
-            environment.merge(baseEnvironment) { _, new in new }
-        }
-
-        if let custom = customEnvironment {
-            environment.merge(custom) { _, new in new }
-        }
-
-        process.environment = environment
-
-        let stdoutPipe = Pipe()
-        let stderrPipe = Pipe()
-        process.standardOutput = stdoutPipe
-        process.standardError = stderrPipe
-
-        var capturedStdout = Data()
-        var capturedStderr = Data()
-
-        let stdoutHandle = stdoutPipe.fileHandleForReading
-        let stderrHandle = stderrPipe.fileHandleForReading
-
-        stdoutHandle.readabilityHandler = { [weak self, weak progressController] handle in
-            let data = handle.availableData
-            guard !data.isEmpty else { return }
-            capturedStdout.append(data)
-
-            if let message = String(data: data, encoding: .utf8), !message.isEmpty {
-                DispatchQueue.main.async {
-                    progressController?.append(message)
-                    self?.logToConsole(message)
-                }
+        return ProcessExecutor.shared.runPythonProcess(
+            using: resolution,
+            arguments: arguments,
+            environment: customEnvironment,
+            progressController: progressController,
+            consoleLogger: { [weak self] message in
+                self?.logToConsole(message)
             }
-        }
-
-        stderrHandle.readabilityHandler = { [weak self, weak progressController] handle in
-            let data = handle.availableData
-            guard !data.isEmpty else { return }
-            capturedStderr.append(data)
-
-            if let message = String(data: data, encoding: .utf8), !message.isEmpty {
-                DispatchQueue.main.async {
-                    progressController?.append(message)
-                    self?.logToConsole(message)
-                }
-            }
-        }
-
-        var launchError: Error?
-
-        do {
-            try process.run()
-        } catch {
-            launchError = error
-        }
-
-        if let error = launchError {
-            stdoutHandle.readabilityHandler = nil
-            stderrHandle.readabilityHandler = nil
-            return ProcessExecutionResult(terminationStatus: -1, stdout: capturedStdout, stderr: capturedStderr, error: error)
-        }
-
-        process.waitUntilExit()
-        progressController.append("TotalSegmentator finished with status \(process.terminationStatus). Validating outputs…")
-
-        stdoutHandle.readabilityHandler = nil
-        stderrHandle.readabilityHandler = nil
-
-        capturedStdout.append(stdoutHandle.readDataToEndOfFile())
-        capturedStderr.append(stderrHandle.readDataToEndOfFile())
-
-        return ProcessExecutionResult(
-            terminationStatus: process.terminationStatus,
-            stdout: capturedStdout,
-            stderr: capturedStderr,
-            error: nil
         )
     }
 
