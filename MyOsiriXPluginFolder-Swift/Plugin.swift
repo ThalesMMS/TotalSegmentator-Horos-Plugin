@@ -4,12 +4,12 @@ import CoreData
 // MARK: - Type Aliases
 
 /// Result of executable resolution containing the URL, arguments, and environment variables.
-private typealias ExecutableResolution = (executableURL: URL, leadingArguments: [String], environment: [String: String]?)
+typealias ExecutableResolution = (executableURL: URL, leadingArguments: [String], environment: [String: String]?)
 
 // MARK: - Process Execution
 
 /// Result of a process execution containing status code, output streams, and any errors.
-private struct ProcessExecutionResult {
+struct ProcessExecutionResult {
     /// Process termination status code (0 indicates success).
     let terminationStatus: Int32
     /// Standard output data from the process.
@@ -21,7 +21,7 @@ private struct ProcessExecutionResult {
 }
 
 /// Supported output formats for segmentation results.
-private enum SegmentationOutputType: Equatable {
+enum SegmentationOutputType: Equatable {
     /// DICOM RT-Struct format (default).
     case dicom
     /// NIfTI format (.nii or .nii.gz).
@@ -61,7 +61,7 @@ private enum SegmentationOutputType: Equatable {
 }
 
 /// Metadata for an exported DICOM series.
-private struct ExportedSeries {
+struct ExportedSeries {
     /// The original DICOM series object from Horos.
     let series: DicomSeries
     /// DICOM modality (e.g., "CT", "MR").
@@ -77,7 +77,7 @@ private struct ExportedSeries {
 }
 
 /// Result of exporting DICOM series to disk.
-private struct ExportResult {
+struct ExportResult {
     /// Root directory containing all exports.
     let directory: URL
     /// List of exported series with metadata.
@@ -85,7 +85,7 @@ private struct ExportResult {
 }
 
 /// Result of importing segmentation files into Horos database.
-private struct SegmentationImportResult {
+struct SegmentationImportResult {
     /// File paths that were successfully added.
     let addedFilePaths: [String]
     /// Paths to RT-Struct DICOM files.
@@ -159,7 +159,7 @@ private enum ClassSelectionError: LocalizedError {
     }
 }
 
-private struct SegmentationAuditEntry: Codable {
+struct SegmentationAuditEntry: Codable {
     struct SeriesInfo: Codable {
         let seriesInstanceUID: String?
         let studyInstanceUID: String?
@@ -1409,9 +1409,9 @@ After installing the package, re-run the segmentation.
 
         if process.terminationStatus == 0 {
             do {
-                try self.validateSegmentationOutput(at: output)
+                try self.validateSegmentationOutput(at: outputDirectory)
                 let importResult = try self.integrateSegmentationOutput(
-                    at: output,
+                    at: outputDirectory,
                     outputType: effectiveOutputType,
                     exportContext: exportResult,
                     preferences: preferencesState,
@@ -2930,13 +2930,13 @@ set_license_number(license_value, skip_validation=skip_validation)
         }
 
         if let currentPix = viewer.imageView()?.curDCM {
-            currentPix.createROIsFromRTSTRUCT(dcmObject)
+            currentPix.createROIs(fromRTSTRUCT: dcmObject)
             return true
         }
 
         if let pixList = viewer.pixList() {
             for case let pix as DCMPix in pixList {
-                pix.createROIsFromRTSTRUCT(dcmObject)
+                pix.createROIs(fromRTSTRUCT: dcmObject)
                 return true
             }
         }
@@ -2944,9 +2944,9 @@ set_license_number(license_value, skip_validation=skip_validation)
         let movieCount = Int(viewer.maxMovieIndex())
         if movieCount >= 0 {
             for index in 0...movieCount {
-                if let pixList = viewer.pixList(Int32(index)) {
+                if let pixList = viewer.pixList(index) {
                     for case let pix as DCMPix in pixList {
-                        pix.createROIsFromRTSTRUCT(dcmObject)
+                        pix.createROIs(fromRTSTRUCT: dcmObject)
                         return true
                     }
                 }
@@ -2971,7 +2971,7 @@ set_license_number(license_value, skip_validation=skip_validation)
         progressController: SegmentationProgressWindowController?,
         timeout: TimeInterval = 120
     ) -> Bool {
-        guard let manager = ThreadsManager.defaultManager() else {
+        guard let manager = ThreadsManager.default() else {
             return true
         }
 
@@ -3219,82 +3219,82 @@ set_license_number(license_value, skip_validation=skip_validation)
     }
 }
 
-extension TotalSegmentatorHorosPlugin {
-    struct SegmentationPreferences {
-        struct State {
-            var executablePath: String?
-            var task: String?
-            var useFast: Bool
-            var device: String?
-            var additionalArguments: String?
-            var licenseKey: String?
-            var selectedClassNames: [String]
-            var dcm2niixPath: String?
-            var hideROIs: Bool = false
-        }
+struct SegmentationPreferences {
+    struct State {
+        var executablePath: String?
+        var task: String?
+        var useFast: Bool
+        var device: String?
+        var additionalArguments: String?
+        var licenseKey: String?
+        var selectedClassNames: [String]
+        var dcm2niixPath: String?
+        var hideROIs: Bool = false
+    }
 
-        private enum Keys {
-            static let executablePath = "TotalSegmentatorExecutablePath"
-            static let task = "TotalSegmentatorTask"
-            static let fastMode = "TotalSegmentatorFastMode"
-            static let device = "TotalSegmentatorDevice"
-            static let additionalArguments = "TotalSegmentatorAdditionalArguments"
-            static let licenseKey = "TotalSegmentatorLicenseKey"
-            static let selectedClasses = "TotalSegmentatorSelectedClasses"
-            static let dcm2niixPath = "TotalSegmentatorDcm2NiixPath"
-            static let hideROIs = "TotalSegmentatorHideROIs"
-        }
+    private enum Keys {
+        static let executablePath = "TotalSegmentatorExecutablePath"
+        static let task = "TotalSegmentatorTask"
+        static let fastMode = "TotalSegmentatorFastMode"
+        static let device = "TotalSegmentatorDevice"
+        static let additionalArguments = "TotalSegmentatorAdditionalArguments"
+        static let licenseKey = "TotalSegmentatorLicenseKey"
+        static let selectedClasses = "TotalSegmentatorSelectedClasses"
+        static let dcm2niixPath = "TotalSegmentatorDcm2NiixPath"
+        static let hideROIs = "TotalSegmentatorHideROIs"
+    }
 
-        private let defaults = UserDefaults.standard
+    private let defaults = UserDefaults.standard
 
-        func effectivePreferences() -> State {
-            State(
-                executablePath: defaults.string(forKey: Keys.executablePath),
-                task: defaults.string(forKey: Keys.task),
-                useFast: defaults.bool(forKey: Keys.fastMode),
-                device: defaults.string(forKey: Keys.device),
-                additionalArguments: defaults.string(forKey: Keys.additionalArguments),
-                licenseKey: defaults.string(forKey: Keys.licenseKey),
-                selectedClassNames: defaults.stringArray(forKey: Keys.selectedClasses) ?? [],
-                dcm2niixPath: defaults.string(forKey: Keys.dcm2niixPath),
-                hideROIs: defaults.bool(forKey: Keys.hideROIs)
-            )
-        }
+    func effectivePreferences() -> State {
+        State(
+            executablePath: defaults.string(forKey: Keys.executablePath),
+            task: defaults.string(forKey: Keys.task),
+            useFast: defaults.bool(forKey: Keys.fastMode),
+            device: defaults.string(forKey: Keys.device),
+            additionalArguments: defaults.string(forKey: Keys.additionalArguments),
+            licenseKey: defaults.string(forKey: Keys.licenseKey),
+            selectedClassNames: defaults.stringArray(forKey: Keys.selectedClasses) ?? [],
+            dcm2niixPath: defaults.string(forKey: Keys.dcm2niixPath),
+            hideROIs: defaults.bool(forKey: Keys.hideROIs)
+        )
+    }
 
-        func store(_ state: State) {
-            defaults.setValue(state.executablePath, forKey: Keys.executablePath)
-            defaults.setValue(state.task, forKey: Keys.task)
-            defaults.setValue(state.useFast, forKey: Keys.fastMode)
-            defaults.setValue(state.device, forKey: Keys.device)
-            defaults.setValue(state.additionalArguments, forKey: Keys.additionalArguments)
-            defaults.setValue(state.licenseKey, forKey: Keys.licenseKey)
-            defaults.setValue(state.selectedClassNames, forKey: Keys.selectedClasses)
-            defaults.setValue(state.dcm2niixPath, forKey: Keys.dcm2niixPath)
-            defaults.setValue(state.hideROIs, forKey: Keys.hideROIs)
-        }
+    func store(_ state: State) {
+        defaults.setValue(state.executablePath, forKey: Keys.executablePath)
+        defaults.setValue(state.task, forKey: Keys.task)
+        defaults.setValue(state.useFast, forKey: Keys.fastMode)
+        defaults.setValue(state.device, forKey: Keys.device)
+        defaults.setValue(state.additionalArguments, forKey: Keys.additionalArguments)
+        defaults.setValue(state.licenseKey, forKey: Keys.licenseKey)
+        defaults.setValue(state.selectedClassNames, forKey: Keys.selectedClasses)
+        defaults.setValue(state.dcm2niixPath, forKey: Keys.dcm2niixPath)
+        defaults.setValue(state.hideROIs, forKey: Keys.hideROIs)
+    }
 
-        func defaultExecutableURL() throws -> URL {
-            if let pythonHome = ProcessInfo.processInfo.environment["TOTALSEGMENTATOR_HOME"] {
-                let url = URL(fileURLWithPath: pythonHome).appendingPathComponent("bin/TotalSegmentator")
-                if FileManager.default.fileExists(atPath: url.path) {
-                    return url
-                }
+    func defaultExecutableURL() throws -> URL {
+        if let pythonHome = ProcessInfo.processInfo.environment["TOTALSEGMENTATOR_HOME"] {
+            let url = URL(fileURLWithPath: pythonHome).appendingPathComponent("bin/TotalSegmentator")
+            if FileManager.default.fileExists(atPath: url.path) {
+                return url
             }
-
-            let defaultPaths = [
-                "/opt/homebrew/bin/TotalSegmentator",
-                "/usr/local/bin/TotalSegmentator",
-                "/usr/bin/TotalSegmentator"
-            ]
-
-            for path in defaultPaths where FileManager.default.fileExists(atPath: path) {
-                return URL(fileURLWithPath: path)
-            }
-
-            throw SegmentationValidationError.executableNotFound
         }
+
+        let defaultPaths = [
+            "/opt/homebrew/bin/TotalSegmentator",
+            "/usr/local/bin/TotalSegmentator",
+            "/usr/bin/TotalSegmentator"
+        ]
+
+        for path in defaultPaths where FileManager.default.fileExists(atPath: path) {
+            return URL(fileURLWithPath: path)
+        }
+
+        throw SegmentationValidationError.executableNotFound
     }
 }
+
+
 
 private enum SegmentationValidationError: LocalizedError {
     case executableNotFound
