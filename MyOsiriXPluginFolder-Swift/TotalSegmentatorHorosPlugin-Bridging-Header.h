@@ -11,4 +11,10 @@
 #import <Horos/ViewerController.h>
 #import <Horos/DCMPix.h>
 #import <Horos/ThreadsManager.h>
+#if __has_include(<DCM/DCMObject.h>)
 #import <DCM/DCMObject.h>
+#elif __has_include(<Horos/DCMObject.h>)
+#import <Horos/DCMObject.h>
+#else
+#import "DCMObject.h"
+#endif

@@ -1,6 +1,6 @@
 import Cocoa
 
-final class RunSegmentationWindowController: NSWindowController, NSTextFieldDelegate {
+final class RunSegmentationWindowController: NSWindowController, NSTextFieldDelegate, NSWindowDelegate {
     typealias PreferencesState = TotalSegmentatorHorosPlugin.SegmentationPreferences.State
 
     private let fallbackOutputPath: String = {
@@ -56,6 +56,7 @@ final class RunSegmentationWindowController: NSWindowController, NSTextFieldDele
 
     override func windowDidLoad() {
         super.windowDidLoad()
+        window?.delegate = self
         outputPathField?.delegate = self
         launchButton?.isEnabled = true
         if outputPathField?.stringValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true {
@@ -64,8 +65,7 @@ final class RunSegmentationWindowController: NSWindowController, NSTextFieldDele
         applyConfiguration()
     }
 
-    override func windowDidBecomeKey(_ notification: Notification) {
-        super.windowDidBecomeKey(notification)
+    func windowDidBecomeKey(_ notification: Notification) {
         launchButton?.isEnabled = true
         launchButton?.alphaValue = 1.0
     }

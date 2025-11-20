@@ -720,7 +720,7 @@ sys.exit(0 if spec is not None else 1)
         }
 
         process.waitUntilExit()
-        progressController.append("TotalSegmentator finished with status \(process.terminationStatus). Validating outputs…")
+        progressController?.append("TotalSegmentator finished with status \(process.terminationStatus). Validating outputs…")
 
         stdoutHandle.readabilityHandler = nil
         stderrHandle.readabilityHandler = nil
@@ -1471,9 +1471,9 @@ After installing the package, re-run the segmentation.
 
         if process.terminationStatus == 0 {
             do {
-                try self.validateSegmentationOutput(at: output)
+                try self.validateSegmentationOutput(at: outputDirectory)
                 let importResult = try self.integrateSegmentationOutput(
-                    at: output,
+                    at: outputDirectory,
                     outputType: effectiveOutputType,
                     exportContext: exportResult,
                     preferences: preferencesState,
@@ -2986,19 +2986,18 @@ set_license_number(license_value, skip_validation=skip_validation)
     }
 
     private func applyRTStructOverlay(from path: String, to viewer: ViewerController) -> Bool {
-        guard let rawObject = DCMObject(contentsOfFile: path, decodingPixelData: false),
-              let dcmObject = rawObject as? DCMObject else {
+        guard let dcmObject = DCMObject(contentsOfFile: path, decodingPixelData: false) else {
             return false
         }
 
         if let currentPix = viewer.imageView()?.curDCM {
-            currentPix.createROIsFromRTSTRUCT(dcmObject)
+            currentPix.createROIs(fromRTSTRUCT: dcmObject)
             return true
         }
 
         if let pixList = viewer.pixList() {
             for case let pix as DCMPix in pixList {
-                pix.createROIsFromRTSTRUCT(dcmObject)
+                pix.createROIs(fromRTSTRUCT: dcmObject)
                 return true
             }
         }
@@ -3006,9 +3005,9 @@ set_license_number(license_value, skip_validation=skip_validation)
         let movieCount = Int(viewer.maxMovieIndex())
         if movieCount >= 0 {
             for index in 0...movieCount {
-                if let pixList = viewer.pixList(Int32(index)) {
+                if let pixList = viewer.pixList(index) {
                     for case let pix as DCMPix in pixList {
-                        pix.createROIsFromRTSTRUCT(dcmObject)
+                        pix.createROIs(fromRTSTRUCT: dcmObject)
                         return true
                     }
                 }
@@ -3033,13 +3032,13 @@ set_license_number(license_value, skip_validation=skip_validation)
         progressController: SegmentationProgressWindowController?,
         timeout: TimeInterval = 120
     ) -> Bool {
-        guard let manager = ThreadsManager.defaultManager() else {
+        guard let manager = ThreadsManager.`default`() else {
             return true
         }
 
         let deadline = Date().addingTimeInterval(timeout)
         while Date() < deadline {
-            let threadObjects = manager.threads() as? [Any] ?? []
+            let threadObjects = manager.threads() ?? []
             let hasConversion = threadObjects.contains { element in
                 guard let thread = element as? Thread, let name = thread.name else { return false }
                 return name.contains("Converting RTSTRUCT in ROIs")
