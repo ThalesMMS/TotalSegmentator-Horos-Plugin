@@ -1,2 +1,6 @@
 # Exclude bundled Horos framework from Linguist language stats
 MyOsiriXPluginFolder-Swift/Horos.framework/** linguist-vendored
+
+# Exclude helper shell scripts (release/test tooling) from Linguist language stats
+resources/*.sh linguist-vendored
+tests/*.sh linguist-vendored
