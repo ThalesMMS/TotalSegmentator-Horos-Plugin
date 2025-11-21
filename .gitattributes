@@ -1,4 +1,2 @@
 # Exclude bundled Horos framework from Linguist language stats
 MyOsiriXPluginFolder-Swift/Horos.framework/** linguist-vendored
-scripts/*.sh linguist-vendored linguist-detectable=false
-scripts/*.bash linguist-vendored linguist-detectable=false
