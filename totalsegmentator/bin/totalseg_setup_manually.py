@@ -1,4 +1,15 @@
 #!/usr/bin/env python
+#
+# totalseg_setup_manually.py
+# TotalSegmentator
+#
+# Assists with manual setup when automatic downloads are not available or allowed.
+#
+# Thales Matheus Mendonça Santos - November 2025
+#
+
+"""Ajuda em instalacoes manuais quando o download automatico nao e possivel."""
+
 import sys
 from pathlib import Path
 import argparse

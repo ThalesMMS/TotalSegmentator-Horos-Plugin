@@ -1,3 +1,14 @@
+#
+# cropping.py
+# TotalSegmentator
+#
+# Implements cropping helpers and bounding-box calculations before feeding volumes into the models.
+#
+# Thales Matheus Mendonça Santos - November 2025
+#
+
+"""Funcoes para calcular bounding boxes e cortes antes de enviar volumes ao modelo."""
+
 import os
 from pathlib import Path
 import subprocess

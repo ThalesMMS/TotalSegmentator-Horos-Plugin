@@ -1,4 +1,15 @@
 #!/usr/bin/env python
+#
+# totalseg_get_modality.py
+# TotalSegmentator
+#
+# Detects imaging modality from DICOM or NIfTI metadata to guide processing choices.
+#
+# Thales Matheus Mendonça Santos - November 2025
+#
+
+"""Detecta modalidade de imagem a partir de metadados DICOM ou NIfTI."""
+
 import sys
 from pathlib import Path
 import time

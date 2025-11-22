@@ -1,3 +1,14 @@
+#
+# tests_REMOVE.py
+# TotalSegmentator
+#
+# Legacy or temporary tests kept for compatibility and regression checks.
+#
+# Thales Matheus Mendonça Santos - November 2025
+#
+
+"""Colecao temporaria de testes antigos mantidos por compatibilidade."""
+
 import pytest
 import os
 import sys

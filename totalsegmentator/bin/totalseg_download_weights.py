@@ -1,4 +1,15 @@
 #!/usr/bin/env python
+#
+# totalseg_download_weights.py
+# TotalSegmentator
+#
+# CLI downloader for pretrained weights with optional license-aware behavior.
+#
+# Thales Matheus Mendonça Santos - November 2025
+#
+
+"""Downloader de pesos pre-treinados via CLI."""
+
 import os
 import sys
 from pathlib import Path

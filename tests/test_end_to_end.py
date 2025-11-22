@@ -1,3 +1,14 @@
+#
+# test_end_to_end.py
+# TotalSegmentator
+#
+# End-to-end integration tests of the segmentation pipeline using sample data.
+#
+# Thales Matheus Mendonça Santos - November 2025
+#
+
+"""Casos de integracao rodando o pipeline completo com dados ficticios."""
+
 import os
 import unittest
 import pytest

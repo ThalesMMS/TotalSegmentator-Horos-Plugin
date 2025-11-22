@@ -1,3 +1,14 @@
+#
+# combine_mask_to_multilabel.py
+# TotalSegmentator
+#
+# Helper script that merges individual masks into a multilabel array for test fixtures.
+#
+# Thales Matheus Mendonça Santos - November 2025
+#
+
+"""Helper que combina mascaras em um array multi-label."""
+
 from pathlib import Path
 
 import numpy as np

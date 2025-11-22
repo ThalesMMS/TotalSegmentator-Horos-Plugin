@@ -1,3 +1,14 @@
+#
+# statistics.py
+# TotalSegmentator
+#
+# Computes volumetric summaries and radiomic statistics for generated segmentation masks.
+#
+# Thales Matheus Mendonça Santos - November 2025
+#
+
+"""Calcula estatisticas basicas sobre volumes e mascaras geradas."""
+
 import pathlib
 from pathlib import Path
 import json

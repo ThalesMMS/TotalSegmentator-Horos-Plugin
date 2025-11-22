@@ -1,3 +1,14 @@
+#
+# nnunet.py
+# TotalSegmentator
+#
+# Wraps nnU-Net inference, custom trainers, preprocessing, and postprocessing tailored for TotalSegmentator.
+#
+# Thales Matheus Mendonça Santos - November 2025
+#
+
+"""Wrapper do nnU-Net com configuracao, verificacoes e chamadas de inferencia."""
+
 import os
 import sys
 import random
@@ -65,6 +76,7 @@ warnings.filterwarnings("ignore", category=FutureWarning, module="nnunetv2")  # 
 
 
 def get_full_task_name(task_id: int, src: str="raw"):
+    # Resolve o nome completo do dataset a partir das variaveis de ambiente nnU-Net.
     if src == "raw":
         base = Path(os.environ['nnUNet_raw_data_base']) / "nnUNet_raw_data"
     elif src == "preprocessed":
@@ -803,4 +815,3 @@ def nnUNet_predict_image(file_in: Union[str, Path, Nifti1Image], file_out, task_
                 nib.save(skin, file_out / "skin.nii.gz")
 
     return img_out, img_in_orig, stats
-

@@ -1,3 +1,14 @@
+#
+# setup.py
+# TotalSegmentator
+#
+# Packaging and installation script for the TotalSegmentator project.
+#
+# Thales Matheus Mendonça Santos - November 2025
+#
+
+"""Script de instalacao do pacote TotalSegmentator."""
+
 from setuptools import setup, find_packages
 
 

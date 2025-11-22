@@ -1,4 +1,16 @@
+//
+// ClassSelectionWindowController.swift
+// TotalSegmentator
+//
+// Shows a sheet to filter and choose segmentation classes before launching TotalSegmentator.
+//
+// Thales Matheus Mendonça Santos - November 2025
+//
+
 import Cocoa
+
+// Janela simples para o usuario escolher quais classes de segmentacao quer importar.
+// Mantemos a interface pequena e focada em pesquisa rapida + checkboxes.
 
 final class ClassSelectionWindowController: NSWindowController, NSTableViewDataSource, NSTableViewDelegate {
     private struct ClassItem {
@@ -43,6 +55,7 @@ final class ClassSelectionWindowController: NSWindowController, NSTableViewDataS
     private func configureContent() {
         guard let contentView = window?.contentView else { return }
 
+        // Construcao programatica para evitar depender de nibs externos.
         searchField.translatesAutoresizingMaskIntoConstraints = false
         searchField.placeholderString = NSLocalizedString("Filter classes", comment: "Search field placeholder for class selection")
         searchField.target = self
@@ -110,6 +123,7 @@ final class ClassSelectionWindowController: NSWindowController, NSTableViewDataS
         if currentFilter.isEmpty {
             filteredIndices = Array(items.indices)
         } else {
+            // Mantemos apenas os indices que contem o filtro digitado (ignorando maiusculas/minusculas e acentos).
             filteredIndices = items.indices.filter { index in
                 items[index].name.range(of: currentFilter, options: [.caseInsensitive, .diacriticInsensitive]) != nil
             }
@@ -125,6 +139,7 @@ final class ClassSelectionWindowController: NSWindowController, NSTableViewDataS
     @objc private func toggleClassCheckbox(_ sender: NSButton) {
         let index = sender.tag
         guard items.indices.contains(index) else { return }
+        // As linhas sao controladas por tag para manter o estado sem datasource adicional.
         items[index].isSelected = sender.state == .on
     }
 

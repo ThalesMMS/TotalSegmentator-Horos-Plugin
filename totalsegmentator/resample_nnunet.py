@@ -1,3 +1,14 @@
+#
+# resample_nnunet.py
+# TotalSegmentator
+#
+# nnU-Net compatible resampling helpers that handle anisotropy and patient-level data layouts.
+#
+# Thales Matheus Mendonça Santos - November 2025
+#
+
+"""Ferramentas para reamostrar outputs do nnU-Net e mover pastas."""
+
 from collections import OrderedDict
 
 from skimage.transform import resize

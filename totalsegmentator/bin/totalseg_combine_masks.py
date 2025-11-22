@@ -1,4 +1,15 @@
 #!/usr/bin/env python
+#
+# totalseg_combine_masks.py
+# TotalSegmentator
+#
+# Combines individual masks into a single multilabel file for downstream use.
+#
+# Thales Matheus Mendonça Santos - November 2025
+#
+
+"""Combina mascaras individuais em um unico arquivo multi-label."""
+
 import sys
 from pathlib import Path
 import argparse

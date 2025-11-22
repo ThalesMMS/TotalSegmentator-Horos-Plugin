@@ -1,3 +1,14 @@
+#
+# nifti_ext_header.py
+# TotalSegmentator
+#
+# Handles NIfTI extension headers to store and retrieve class metadata for multilabel outputs.
+#
+# Thales Matheus Mendonça Santos - November 2025
+#
+
+"""Manipula extensoes de cabecalho NIfTI para guardar metadados de classes."""
+
 import sys
 from pathlib import Path
 p_dir = str(Path(__file__).absolute().parents[1])
@@ -80,4 +91,3 @@ def load_multilabel_nifti(img_path):
         
     label_map = {int(e["@Key"]): e["#text"] for e in ext_header}
     return img, label_map
-

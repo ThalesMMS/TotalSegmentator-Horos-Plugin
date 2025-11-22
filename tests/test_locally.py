@@ -1,3 +1,14 @@
+#
+# test_locally.py
+# TotalSegmentator
+#
+# Local helper tests for running the pipeline on small volumes quickly.
+#
+# Thales Matheus Mendonça Santos - November 2025
+#
+
+"""Suporta execucao local de testes rapidos em volumes pequenos."""
+
 import sys
 from pathlib import Path
 p_dir = str(Path(__file__).absolute().parents[1])

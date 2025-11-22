@@ -1,3 +1,14 @@
+#
+# serialization_utils.py
+# TotalSegmentator
+#
+# Streaming and serialization helpers for NIfTI images, label maps, and compressed payloads.
+#
+# Thales Matheus Mendonça Santos - November 2025
+#
+
+"""Leitura e escrita de configuracoes e headers extras de segmentacao."""
+
 import json
 import io
 import hashlib

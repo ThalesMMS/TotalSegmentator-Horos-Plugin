@@ -1,3 +1,14 @@
+#
+# map_to_binary.py
+# TotalSegmentator
+#
+# Contains label maps from multi-class IDs to binary subsets along with commercial model metadata.
+#
+# Thales Matheus Mendonça Santos - November 2025
+#
+
+"""Tabelas que mapeiam ids de classe para rotulos e subconjuntos binarios."""
+
 class_map = {
 
     # classes of old TotalSegmentator v1

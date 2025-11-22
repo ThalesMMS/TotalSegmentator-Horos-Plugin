@@ -1,3 +1,14 @@
+#
+# tests_os.py
+# TotalSegmentator
+#
+# Covers OS-dependent helpers and filesystem path handling routines.
+#
+# Thales Matheus Mendonça Santos - November 2025
+#
+
+"""Cobre funcoes dependentes de sistema operacional e caminhos."""
+
 import pytest
 import os
 import sys

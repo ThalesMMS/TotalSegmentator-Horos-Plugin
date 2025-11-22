@@ -1,3 +1,14 @@
+#
+# excel.py
+# TotalSegmentator
+#
+# Small Excel read/write helpers for segmentation evaluation spreadsheets.
+#
+# Thales Matheus Mendonça Santos - November 2025
+#
+
+"""Le e escreve planilhas relacionadas a avaliacoes de segmentacao."""
+
 def set_xlsx_column_width_to_content(file_name):
     from openpyxl import load_workbook
     from openpyxl.utils import get_column_letter

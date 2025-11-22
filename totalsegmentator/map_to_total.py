@@ -1,3 +1,14 @@
+#
+# map_to_total.py
+# TotalSegmentator
+#
+# Maps narrower or commercial class sets to the full TotalSegmentator label space for cropping and ROI selection.
+#
+# Thales Matheus Mendonça Santos - November 2025
+#
+
+"""Mapeia conjuntos pequenos de classes para o conjunto completo total."""
+
 # Mapping of classes of commercial models (which are not part of 6mm model) to a class which is part of
 # 6mm the model. This is needed to crop to this class when using --roi_subset.
 map_to_total = {

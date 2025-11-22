@@ -1,4 +1,15 @@
 #!/usr/bin/env python
+#
+# totalseg_set_license.py
+# TotalSegmentator
+#
+# Sets and persists the TotalSegmentator license number in local configuration.
+#
+# Thales Matheus Mendonça Santos - November 2025
+#
+
+"""Configura o numero de licenca no arquivo de configuracao local."""
+
 import sys
 from pathlib import Path
 import argparse

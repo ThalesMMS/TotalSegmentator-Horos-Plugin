@@ -1,3 +1,14 @@
+#
+# test_img_split.py
+# TotalSegmentator
+#
+# Tests image splitting utilities used by the pipeline for patching volumes.
+#
+# Thales Matheus Mendonça Santos - November 2025
+#
+
+"""Testa rotinas de divisao de volume em blocos menores."""
+
 from pathlib import Path
 
 import numpy as np

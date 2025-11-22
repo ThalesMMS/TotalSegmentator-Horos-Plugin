@@ -1,3 +1,14 @@
+#
+# evaluate.py
+# TotalSegmentator
+#
+# Lightweight evaluation script for running metrics on nnU-Net predictions.
+#
+# Thales Matheus Mendonça Santos - November 2025
+#
+
+"""Script de avaliacao simples para validar previsoes do nnU-Net."""
+
 import sys
 import os
 from pathlib import Path

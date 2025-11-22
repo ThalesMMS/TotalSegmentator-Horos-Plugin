@@ -1,3 +1,14 @@
+#
+# registration.py
+# TotalSegmentator
+#
+# Registration utilities to align masks and volumes to reference spaces when needed.
+#
+# Thales Matheus Mendonça Santos - November 2025
+#
+
+"""Rotinas de registro para alinhar mascaras e volumes com referenciais."""
+
 import time
 
 import nibabel as nib

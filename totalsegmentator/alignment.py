@@ -1,3 +1,14 @@
+#
+# alignment.py
+# TotalSegmentator
+#
+# Orientation utilities to convert NIfTI images to canonical space and back to the original layout.
+#
+# Thales Matheus Mendonça Santos - November 2025
+#
+
+"""Funcoes utilitarias para alinhar e reverter orientacao de imagens NIfTI."""
+
 import sys
 
 import numpy as np
@@ -51,4 +62,3 @@ def undo_canonical_nifti(path_in_can, path_in_orig, path_out):
     img_orig = nib.load(path_in_orig)
     img_out = undo_canonical(img_can, img_orig)
     nib.save(img_out, path_out)
-

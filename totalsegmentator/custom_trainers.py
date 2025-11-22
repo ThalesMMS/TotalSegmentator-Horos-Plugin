@@ -1,3 +1,14 @@
+#
+# custom_trainers.py
+# TotalSegmentator
+#
+# Defines custom nnU-Net trainer variants integrated into the TotalSegmentator pipeline.
+#
+# Thales Matheus Mendonça Santos - November 2025
+#
+
+"""Contem ganchos para treinadores personalizados do nnU-Net usados pelo projeto."""
+
 import torch
 from nnunetv2.training.nnUNetTrainer.variants.data_augmentation.nnUNetTrainerNoMirroring import nnUNetTrainerNoMirroring
 

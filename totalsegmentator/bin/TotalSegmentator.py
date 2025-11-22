@@ -1,4 +1,15 @@
 #!/usr/bin/env python
+#
+# TotalSegmentator.py
+# TotalSegmentator
+#
+# Primary CLI entry point that parses arguments and calls the TotalSegmentator Python API.
+#
+# Thales Matheus Mendonça Santos - November 2025
+#
+
+"""CLI principal que orquestra argumentos e chama o pipeline TotalSegmentator."""
+
 import argparse
 import importlib.metadata
 from pathlib import Path
@@ -18,6 +29,7 @@ def main():
     parser = argparse.ArgumentParser(description="Segment 104 anatomical structures in CT images.",
                                      epilog="Written by Jakob Wasserthal. If you use this tool please cite https://pubs.rsna.org/doi/10.1148/ryai.230024")
 
+    # Mapeamos as opcoes da CLI diretamente para os argumentos da funcao python_api.totalsegmentator.
     parser.add_argument("-i", metavar="filepath", dest="input",
                         help="CT nifti image or folder of dicom slices or zip file of dicom slices.",
                         type=lambda p: Path(p).absolute(), required=True)
@@ -152,6 +164,7 @@ def main():
 
     args = parser.parse_args()
 
+    # Encaminha todos os argumentos validados para a API principal.
     totalsegmentator(args.input, args.output, args.ml, args.nr_thr_resamp, args.nr_thr_saving,
                      args.fast, args.nora_tag, args.preview, args.task, args.roi_subset,
                      args.statistics, args.radiomics, args.crop_path, args.body_seg,

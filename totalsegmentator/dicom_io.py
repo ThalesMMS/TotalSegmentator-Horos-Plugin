@@ -1,3 +1,14 @@
+#
+# dicom_io.py
+# TotalSegmentator
+#
+# Provides DICOM I/O helpers and conversions to and from NIfTI plus RT Struct export utilities.
+#
+# Thales Matheus Mendonça Santos - November 2025
+#
+
+"""Operacoes de leitura e escrita de DICOM, alem de conversoes para NIfTI."""
+
 import os
 import sys
 import time

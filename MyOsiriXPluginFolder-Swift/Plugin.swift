@@ -1,5 +1,17 @@
+//
+// Plugin.swift
+// TotalSegmentator
+//
+// Main Horos plugin that exports DICOM series, runs the TotalSegmentator CLI, and imports masks back as overlays.
+//
+// Thales Matheus Mendonça Santos - November 2025
+//
+
 import Cocoa
 import CoreData
+
+// Plugin que faz a ponte entre o TotalSegmentator (CLI Python) e o Horos/OsiriX.
+// Exporta as series DICOM abertas, executa o modelo e traz as mascaras de volta como overlays.
 
 private typealias ExecutableResolution = (executableURL: URL, leadingArguments: [String], environment: [String: String]?)
 
@@ -149,6 +161,8 @@ private struct SegmentationAuditEntry: Codable {
     let convertedFromNifti: Bool
 }
 
+/// Implementacao principal do filtro Horos.
+/// Orquestra exportacao DICOM, execucao do TotalSegmentator e reimportacao das mascaras.
 @objc(TotalSegmentatorHorosPlugin)
 class TotalSegmentatorHorosPlugin: PluginFilter {
     @IBOutlet private weak var settingsWindow: NSWindow!
@@ -210,6 +224,7 @@ class TotalSegmentatorHorosPlugin: PluginFilter {
         ("mps", "mps")
     ]
 
+    // Entrada principal chamada pelo Horos ao clicar nos itens de menu do plugin.
     override func filterImage(_ menuName: String!) -> Int {
         logToConsole("filterImage invoked for menu action: \(menuName ?? "nil")")
         guard let menuName = menuName,
@@ -1180,6 +1195,7 @@ After installing the package, re-run the segmentation.
     }
 
     private func startSegmentationFlow() {
+        // Coleta a serie ativa, exporta para uma pasta temporaria e abre a UI de configuracao.
         logToConsole("startSegmentationFlow called")
         let primaryViewer = (self.value(forKey: "viewerController") as? ViewerController) ?? ViewerController.frontMostDisplayed2DViewer()
         logToConsole("viewerController via KVC: \((self.value(forKey: "viewerController") as? ViewerController) != nil)")
@@ -1261,6 +1277,7 @@ After installing the package, re-run the segmentation.
         outputDirectory providedOutputDirectory: URL?,
         preferences preferencesState: SegmentationPreferences.State
     ) {
+        // Executa o pipeline completo: valida ambiente Python, monta argumentos e reimporta os resultados.
         defer { cleanupTemporaryDirectory(exportResult.directory) }
 
         performInitialSetupIfNeeded(displayProgress: true)

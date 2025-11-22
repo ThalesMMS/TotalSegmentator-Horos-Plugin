@@ -1,3 +1,14 @@
+#
+# python_api.py
+# TotalSegmentator
+#
+# High-level Python interface to run TotalSegmentator, manage devices, and compute statistics programmatically.
+#
+# Thales Matheus Mendonça Santos - November 2025
+#
+
+"""API de alto nivel para chamar o TotalSegmentator em pipelines Python."""
+
 import sys
 import os
 from pathlib import Path
@@ -59,6 +70,7 @@ def select_device(device):
         device = "cuda"
     if device.startswith("cuda"): 
         if device == "cuda": device = "cuda:0"
+        # Se GPU nao esta disponivel, recua para CPU mas alerta o usuario.
         if not torch.cuda.is_available():
             print("No GPU detected. Running on CPU. This can be very slow. The '--fast' or the `--roi_subset` option can help to reduce runtime.")
             device = "cpu"
@@ -125,6 +137,7 @@ def totalsegmentator(input: Union[str, Path, Nifti1Image], output: Union[str, Pa
     initial_cudnn_benchmark = torch.backends.cudnn.benchmark
     initial_num_threads = torch.get_num_threads()
 
+    # Dispara validacoes cedo para evitar esperas longas antes de falhas previsiveis.
     validate_device_type_api(device)
     device = select_device(device)
     if verbose: print(f"Using Device: {device}")

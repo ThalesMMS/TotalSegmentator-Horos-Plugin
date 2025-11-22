@@ -1,3 +1,14 @@
+#
+# test_device_type.py
+# TotalSegmentator
+#
+# Tests device detection logic for GPU, CPU, and MPS selection paths.
+#
+# Thales Matheus Mendonça Santos - November 2025
+#
+
+"""Testa deteccao de dispositivo suportado (cpu, gpu ou mps)."""
+
 from totalsegmentator.bin.TotalSegmentator import validate_device_type
 import unittest
 import argparse

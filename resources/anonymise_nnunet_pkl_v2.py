@@ -1,3 +1,14 @@
+#
+# anonymise_nnunet_pkl_v2.py
+# TotalSegmentator
+#
+# Strips sensitive identifiers from nnU-Net training pickle files for safer sharing.
+#
+# Thales Matheus Mendonça Santos - November 2025
+#
+
+"""Remove identificadores sensiveis de arquivos PKL de treino do nnU-Net."""
+
 import os
 import sys
 import pickle

@@ -1,4 +1,16 @@
+//
+// RunSegmentationWindowController.swift
+// TotalSegmentator
+//
+// Window that configures task, device, ROI subset, license, and output path prior to running segmentation.
+//
+// Thales Matheus Mendonça Santos - November 2025
+//
+
 import Cocoa
+
+// Janela de configuracao para o TotalSegmentator dentro do Horos.
+// Concentra a escolha de tarefa, dispositivo e diretorio de saida antes de disparar o pipeline.
 
 final class RunSegmentationWindowController: NSWindowController, NSTextFieldDelegate, NSWindowDelegate {
     typealias PreferencesState = TotalSegmentatorHorosPlugin.SegmentationPreferences.State
@@ -59,6 +71,7 @@ final class RunSegmentationWindowController: NSWindowController, NSTextFieldDele
         window?.delegate = self
         outputPathField?.delegate = self
         launchButton?.isEnabled = true
+        // Preenche com um caminho padrao para evitar campos vazios na primeira abertura.
         if outputPathField?.stringValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true {
             outputPathField?.stringValue = fallbackOutputPath
         }
@@ -72,6 +85,7 @@ final class RunSegmentationWindowController: NSWindowController, NSTextFieldDele
 
     func controlTextDidChange(_ obj: Notification) {
         guard let textField = obj.object as? NSTextField, textField == outputPathField else { return }
+        // Atualiza botao sempre que o usuario altera o caminho manualmente.
         updateLaunchButtonState()
     }
 
@@ -129,6 +143,7 @@ final class RunSegmentationWindowController: NSWindowController, NSTextFieldDele
         }
 
         if !hasConfiguredOptions {
+            // Opcoes sao configuradas apenas uma vez para manter selecao do usuario ao reabrir a janela.
             populatePopUpButton(taskPopupButton, with: configuration.taskOptions)
             populatePopUpButton(devicePopupButton, with: configuration.deviceOptions)
             hasConfiguredOptions = true
@@ -182,6 +197,7 @@ final class RunSegmentationWindowController: NSWindowController, NSTextFieldDele
     private func gatherPreferencesFromUI() -> PreferencesState? {
         guard var preferences = configuration?.preferences else { return nil }
 
+        // Recupera a escolha do usuario sem assumir que os itens sempre existem.
         if let selectedTask = taskPopupButton?.selectedItem?.representedObject as? String {
             preferences.task = selectedTask
         } else {

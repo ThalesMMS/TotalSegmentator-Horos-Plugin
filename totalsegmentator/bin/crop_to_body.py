@@ -1,4 +1,15 @@
 #!/usr/bin/env python
+#
+# crop_to_body.py
+# TotalSegmentator
+#
+# CLI tool that crops images to the body region using a rough segmentation mask.
+#
+# Thales Matheus Mendonça Santos - November 2025
+#
+
+"""Ferramenta CLI para recortar volumes para a regiao do corpo."""
+
 import sys
 import os
 import argparse

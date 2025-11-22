@@ -1,3 +1,14 @@
+#
+# resampling.py
+# TotalSegmentator
+#
+# General-purpose resampling functions for volumes, masks, spacing changes, and affine adjustments.
+#
+# Thales Matheus Mendonça Santos - November 2025
+#
+
+"""Funcoes genericas de reamostragem para volumes, mascaras e espacamento."""
+
 # pylint: disable=relative-beyond-top-level
 
 import os

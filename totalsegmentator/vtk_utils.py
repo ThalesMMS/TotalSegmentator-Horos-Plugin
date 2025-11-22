@@ -1,3 +1,14 @@
+#
+# vtk_utils.py
+# TotalSegmentator
+#
+# Generates and filters VTK meshes from masks, adding smoothing or decimation as needed.
+#
+# Thales Matheus Mendonça Santos - November 2025
+#
+
+"""Gera malhas VTK a partir de mascaras e aplica filtros auxiliares."""
+
 import numpy as np
 import vtk
 from vtk.util import numpy_support

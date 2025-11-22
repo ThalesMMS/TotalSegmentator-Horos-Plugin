@@ -1,3 +1,14 @@
+#
+# download_pretrained_weights.py
+# TotalSegmentator
+#
+# CLI helper that downloads pretrained weights for multiple tasks with pacing to avoid overloading servers.
+#
+# Thales Matheus Mendonça Santos - November 2025
+#
+
+"""Script simples para baixar pesos pre-treinados usando o client CLI."""
+
 from time import sleep
 
 from libs import download_pretrained_weights
@@ -9,5 +20,6 @@ if __name__ == "__main__":
     for task_id in [291, 292, 293, 294, 295, 297, 298, 258, 150, 260,
                     315, 299, 300, 850, 851, 852, 853, 775, 776, 777, 778,
                     779, 351, 913, 789, 527, 552, 570, 576, 115, 952, 113]:
+        # Intervalo curto evita sobrecarregar o servidor ao baixar em massa.
         download_pretrained_weights(task_id)
         sleep(5)

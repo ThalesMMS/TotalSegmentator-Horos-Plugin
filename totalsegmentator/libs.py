@@ -1,3 +1,14 @@
+#
+# libs.py
+# TotalSegmentator
+#
+# Shared utilities for downloads, license validation, and assorted TotalSegmentator helpers used across modules.
+#
+# Thales Matheus Mendonça Santos - November 2025
+#
+
+"""Utilitarios compartilhados: downloads, gerenciamento de licenca e funcoes auxiliares."""
+
 import io
 import os
 import contextlib
@@ -28,6 +39,7 @@ class DummyFile:
 
 @contextlib.contextmanager
 def nostdout(verbose=False):
+    # Redireciona stdout temporariamente para esconder verbosidade do nnU-Net.
     if not verbose:
         save_stdout = sys.stdout
         sys.stdout = DummyFile()
@@ -38,7 +50,7 @@ def nostdout(verbose=False):
 
 
 def download_model_with_license_and_unpack(task_name, config_dir):
-    # Get License Number
+    # Recupera numero de licenca salvo localmente antes de tentar baixar.
     totalseg_dir = get_totalseg_dir()
     totalseg_config_file = totalseg_dir / "config.json"
     if totalseg_config_file.exists():
@@ -68,6 +80,7 @@ def download_model_with_license_and_unpack(task_name, config_dir):
                 # without progress bar
                 # f.write(r.content)
 
+                # Usa barra de progresso para downloads grandes e chunked.
                 total_size = int(r.headers.get('content-length', 0))
                 progress_bar = tqdm(total=total_size, unit='B', unit_scale=True, desc="Downloading")
                 for chunk in r.iter_content(chunk_size=8192 * 16):

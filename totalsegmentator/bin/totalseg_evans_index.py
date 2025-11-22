@@ -1,3 +1,14 @@
+#
+# totalseg_evans_index.py
+# TotalSegmentator
+#
+# Computes Evans index measurements from images and writes auxiliary outputs.
+#
+# Thales Matheus Mendonça Santos - November 2025
+#
+
+"""Calcula indice de Evans e salva resultados auxiliares."""
+
 import sys
 from pathlib import Path
 import time

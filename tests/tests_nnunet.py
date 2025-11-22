@@ -1,3 +1,14 @@
+#
+# tests_nnunet.py
+# TotalSegmentator
+#
+# Tests for the nnU-Net wrapper, configuration, and prediction plumbing.
+#
+# Thales Matheus Mendonça Santos - November 2025
+#
+
+"""Valida wrappers do nnU-Net e configuracoes derivadas."""
+
 import pytest
 import os
 import sys

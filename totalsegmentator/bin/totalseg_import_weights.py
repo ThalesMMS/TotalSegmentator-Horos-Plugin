@@ -1,4 +1,15 @@
 #!/usr/bin/env python
+#
+# totalseg_import_weights.py
+# TotalSegmentator
+#
+# Imports manually provided weights into the expected TotalSegmentator directory layout.
+#
+# Thales Matheus Mendonça Santos - November 2025
+#
+
+"""Importa pesos fornecidos manualmente para a estrutura esperada."""
+
 import os
 import sys
 from pathlib import Path

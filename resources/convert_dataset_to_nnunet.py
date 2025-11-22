@@ -1,3 +1,14 @@
+#
+# convert_dataset_to_nnunet.py
+# TotalSegmentator
+#
+# Converts datasets into the nnU-Net folder structure with matching metadata.
+#
+# Thales Matheus Mendonça Santos - November 2025
+#
+
+"""Converte datasets para o formato padrao do nnU-Net."""
+
 import sys
 import os
 from pathlib import Path
@@ -110,4 +121,3 @@ if __name__ == "__main__":
                        [subject_path / "segmentations" / f"{roi}.nii.gz" for roi in class_map.values()])
 
     generate_json_from_dir_v2(nnunet_path.name, subjects_train, subjects_val, class_map.values())
-

@@ -1,4 +1,15 @@
 #!/usr/bin/env python
+#
+# totalseg_get_phase.py
+# TotalSegmentator
+#
+# Infers contrast phase for studies using metadata and heuristics.
+#
+# Thales Matheus Mendonça Santos - November 2025
+#
+
+"""Determina fase de contraste usando dados da serie."""
+
 import sys
 from pathlib import Path
 import time

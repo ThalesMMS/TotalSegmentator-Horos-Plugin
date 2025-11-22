@@ -1,3 +1,14 @@
+#
+# preview.py
+# TotalSegmentator
+#
+# Builds VTK-based previews of segmentation masks for quick visualization and debugging.
+#
+# Thales Matheus Mendonça Santos - November 2025
+#
+
+"""Gera imagens de previa das mascaras de segmentacao para depuracao rapida."""
+
 import sys
 import os
 import itertools

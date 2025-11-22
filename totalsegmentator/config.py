@@ -1,3 +1,14 @@
+#
+# config.py
+# TotalSegmentator
+#
+# Manages TotalSegmentator configuration, license handling, directories, and nnU-Net environment setup.
+#
+# Thales Matheus Mendonça Santos - November 2025
+#
+
+"""Carrega caminhos, licenca e preferencas usadas pelo TotalSegmentator."""
+
 import os
 import sys
 import random

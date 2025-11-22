@@ -1,3 +1,14 @@
+#
+# postprocessing.py
+# TotalSegmentator
+#
+# Cleans and refines segmentation masks after inference, including derived masks and blob filtering.
+#
+# Thales Matheus Mendonça Santos - November 2025
+#
+
+"""Limpa e corrige mascaras apos a inferencia (por exemplo remover regioes vazias)."""
+
 import time
 from pathlib import Path
 import numpy as np
@@ -175,4 +186,3 @@ def remove_auxiliary_labels(img, task_name):
         return nib.Nifti1Image(data.astype(np.uint8), img.affine)
     else:
         return img
-
