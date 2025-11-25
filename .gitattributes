@@ -4,3 +4,6 @@ MyOsiriXPluginFolder-Swift/Horos.framework/** linguist-vendored
 # Exclude helper shell scripts (release/test tooling) from Linguist language stats
 resources/*.sh linguist-vendored
 tests/*.sh linguist-vendored
+# Exclude shell scripts from language stats
+*.sh linguist-vendored
+scripts/** linguist-vendored
