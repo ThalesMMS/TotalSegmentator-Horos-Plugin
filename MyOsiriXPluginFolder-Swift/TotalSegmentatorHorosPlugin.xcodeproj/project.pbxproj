@@ -10,6 +10,17 @@
 		CEC0F6EB28BF45CD003DD38F /* Horos.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CEC0F6E928BF45CD003DD38F /* Horos.framework */; };
 		CEC0F6EE28BF49EB003DD38F /* Settings.xib in Resources */ = {isa = PBXBuildFile; fileRef = CEC0F6EC28BF49EB003DD38F /* Settings.xib */; };
 		CEC0F6F228BF8DF5003DD38F /* Plugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEC0F6F128BF8DF5003DD38F /* Plugin.swift */; };
+		1C92A5A122B140E9AD3082CE /* TotalSegmentatorPluginTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BD7F7EB85BC4BE18C812E24 /* TotalSegmentatorPluginTypes.swift */; };
+		51560D95A0BF4BCDA8FECC6E /* TotalSegmentatorHorosPlugin+Utilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB2DB2A009814376A6F2D078 /* TotalSegmentatorHorosPlugin+Utilities.swift */; };
+		F810433067F346A8A870481D /* TotalSegmentatorHorosPlugin+Settings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CE023C3E8BF46EAA4AB2CE0 /* TotalSegmentatorHorosPlugin+Settings.swift */; };
+		BF80B133459B4191B81D5DA4 /* TotalSegmentatorHorosPlugin+ClassSelection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75C420ECD0964634AC5B2900 /* TotalSegmentatorHorosPlugin+ClassSelection.swift */; };
+		7DBA858C63E74C179E1D9D26 /* TotalSegmentatorHorosPlugin+Environment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14FCAED9309F49B3ACE85E87 /* TotalSegmentatorHorosPlugin+Environment.swift */; };
+		ACC55244220940DBB01C0FE9 /* TotalSegmentatorHorosPlugin+Segmentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F46AB8ACA0F4252A8445636 /* TotalSegmentatorHorosPlugin+Segmentation.swift */; };
+		6C6A5CCDA34A41929D82BA54 /* TotalSegmentatorHorosPlugin+Scripts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34D8FEB9C2F04D0FA81C9F39 /* TotalSegmentatorHorosPlugin+Scripts.swift */; };
+		E599F0D4647E410E92F71AF6 /* TotalSegmentatorHorosPlugin+Export.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE021AE8113A4DFBA7F52017 /* TotalSegmentatorHorosPlugin+Export.swift */; };
+		0B69ABEE2ECA4E249A51951B /* TotalSegmentatorHorosPlugin+Import.swift in Sources */ = {isa = PBXBuildFile; fileRef = 935DF9D48BF648B9BFEB2E0A /* TotalSegmentatorHorosPlugin+Import.swift */; };
+		33C9A7B7A22E46E2B69181DF /* TotalSegmentatorHorosPlugin+Audit.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E72E1931C3448F49CCB9C16 /* TotalSegmentatorHorosPlugin+Audit.swift */; };
+		3C35DA86F7204A5D90C51396 /* TotalSegmentatorHorosPlugin+Preferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9AA3040C7F54F17955E2608 /* TotalSegmentatorHorosPlugin+Preferences.swift */; };
 		D2D8D2032AF5A00100AAA111 /* RunSegmentationWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = D2D8D2042AF5A00100AAA111 /* RunSegmentationWindowController.xib */; };
 		D2D8D2052AF5A00100AAA111 /* RunSegmentationWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2D8D2022AF5A00100AAA111 /* RunSegmentationWindowController.swift */; };
 		D2D8D2062AF5A9D200AAA111 /* TotalSegmentatorToolbar.png in Resources */ = {isa = PBXBuildFile; fileRef = D2D8D2072AF5A9D200AAA111 /* TotalSegmentatorToolbar.png */; };
@@ -23,6 +34,17 @@
 		CEC0F6EC28BF49EB003DD38F /* Settings.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = Settings.xib; sourceTree = "<group>"; };
 		CEC0F6F028BF8DF4003DD38F /* TotalSegmentatorHorosPlugin-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "TotalSegmentatorHorosPlugin-Bridging-Header.h"; sourceTree = "<group>"; };
 		CEC0F6F128BF8DF5003DD38F /* Plugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Plugin.swift; sourceTree = "<group>"; };
+		8BD7F7EB85BC4BE18C812E24 /* TotalSegmentatorPluginTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TotalSegmentatorPluginTypes.swift; sourceTree = "<group>"; };
+		BB2DB2A009814376A6F2D078 /* TotalSegmentatorHorosPlugin+Utilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TotalSegmentatorHorosPlugin+Utilities.swift"; sourceTree = "<group>"; };
+		9CE023C3E8BF46EAA4AB2CE0 /* TotalSegmentatorHorosPlugin+Settings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TotalSegmentatorHorosPlugin+Settings.swift"; sourceTree = "<group>"; };
+		75C420ECD0964634AC5B2900 /* TotalSegmentatorHorosPlugin+ClassSelection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TotalSegmentatorHorosPlugin+ClassSelection.swift"; sourceTree = "<group>"; };
+		14FCAED9309F49B3ACE85E87 /* TotalSegmentatorHorosPlugin+Environment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TotalSegmentatorHorosPlugin+Environment.swift"; sourceTree = "<group>"; };
+		8F46AB8ACA0F4252A8445636 /* TotalSegmentatorHorosPlugin+Segmentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TotalSegmentatorHorosPlugin+Segmentation.swift"; sourceTree = "<group>"; };
+		34D8FEB9C2F04D0FA81C9F39 /* TotalSegmentatorHorosPlugin+Scripts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TotalSegmentatorHorosPlugin+Scripts.swift"; sourceTree = "<group>"; };
+		EE021AE8113A4DFBA7F52017 /* TotalSegmentatorHorosPlugin+Export.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TotalSegmentatorHorosPlugin+Export.swift"; sourceTree = "<group>"; };
+		935DF9D48BF648B9BFEB2E0A /* TotalSegmentatorHorosPlugin+Import.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TotalSegmentatorHorosPlugin+Import.swift"; sourceTree = "<group>"; };
+		4E72E1931C3448F49CCB9C16 /* TotalSegmentatorHorosPlugin+Audit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TotalSegmentatorHorosPlugin+Audit.swift"; sourceTree = "<group>"; };
+		B9AA3040C7F54F17955E2608 /* TotalSegmentatorHorosPlugin+Preferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TotalSegmentatorHorosPlugin+Preferences.swift"; sourceTree = "<group>"; };
 		D2D8D2022AF5A00100AAA111 /* RunSegmentationWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunSegmentationWindowController.swift; sourceTree = "<group>"; };
 		D2D8D2042AF5A00100AAA111 /* RunSegmentationWindowController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = RunSegmentationWindowController.xib; sourceTree = "<group>"; };
 		D2D8D2072AF5A9D200AAA111 /* TotalSegmentatorToolbar.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = TotalSegmentatorToolbar.png; sourceTree = "<group>"; };
@@ -47,6 +69,17 @@
 			children = (
 				CEC0F6E928BF45CD003DD38F /* Horos.framework */,
 				CEC0F6F128BF8DF5003DD38F /* Plugin.swift */,
+				8BD7F7EB85BC4BE18C812E24 /* TotalSegmentatorPluginTypes.swift */,
+				BB2DB2A009814376A6F2D078 /* TotalSegmentatorHorosPlugin+Utilities.swift */,
+				9CE023C3E8BF46EAA4AB2CE0 /* TotalSegmentatorHorosPlugin+Settings.swift */,
+				75C420ECD0964634AC5B2900 /* TotalSegmentatorHorosPlugin+ClassSelection.swift */,
+				14FCAED9309F49B3ACE85E87 /* TotalSegmentatorHorosPlugin+Environment.swift */,
+				8F46AB8ACA0F4252A8445636 /* TotalSegmentatorHorosPlugin+Segmentation.swift */,
+				34D8FEB9C2F04D0FA81C9F39 /* TotalSegmentatorHorosPlugin+Scripts.swift */,
+				EE021AE8113A4DFBA7F52017 /* TotalSegmentatorHorosPlugin+Export.swift */,
+				935DF9D48BF648B9BFEB2E0A /* TotalSegmentatorHorosPlugin+Import.swift */,
+				4E72E1931C3448F49CCB9C16 /* TotalSegmentatorHorosPlugin+Audit.swift */,
+				B9AA3040C7F54F17955E2608 /* TotalSegmentatorHorosPlugin+Preferences.swift */,
 				D2D8D2022AF5A00100AAA111 /* RunSegmentationWindowController.swift */,
 				D2D8D2082AF5B3B400AAA111 /* ClassSelectionWindowController.swift */,
 				D2D8D20A2AF5B3CF00AAA111 /* SegmentationProgressWindowController.swift */,
@@ -141,6 +174,17 @@
 				D2D8D20B2AF5B3CF00AAA111 /* SegmentationProgressWindowController.swift in Sources */,
 				D2D8D2052AF5A00100AAA111 /* RunSegmentationWindowController.swift in Sources */,
 				CEC0F6F228BF8DF5003DD38F /* Plugin.swift in Sources */,
+				1C92A5A122B140E9AD3082CE /* TotalSegmentatorPluginTypes.swift in Sources */,
+				51560D95A0BF4BCDA8FECC6E /* TotalSegmentatorHorosPlugin+Utilities.swift in Sources */,
+				F810433067F346A8A870481D /* TotalSegmentatorHorosPlugin+Settings.swift in Sources */,
+				BF80B133459B4191B81D5DA4 /* TotalSegmentatorHorosPlugin+ClassSelection.swift in Sources */,
+				7DBA858C63E74C179E1D9D26 /* TotalSegmentatorHorosPlugin+Environment.swift in Sources */,
+				ACC55244220940DBB01C0FE9 /* TotalSegmentatorHorosPlugin+Segmentation.swift in Sources */,
+				6C6A5CCDA34A41929D82BA54 /* TotalSegmentatorHorosPlugin+Scripts.swift in Sources */,
+				E599F0D4647E410E92F71AF6 /* TotalSegmentatorHorosPlugin+Export.swift in Sources */,
+				0B69ABEE2ECA4E249A51951B /* TotalSegmentatorHorosPlugin+Import.swift in Sources */,
+				33C9A7B7A22E46E2B69181DF /* TotalSegmentatorHorosPlugin+Audit.swift in Sources */,
+				3C35DA86F7204A5D90C51396 /* TotalSegmentatorHorosPlugin+Preferences.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
