@@ -1,6 +1,4 @@
-# TotalSegmentator Horos Plugin (WIP)
-
-> ⚠️ **Work in Progress**: this repository hosts an evolving prototype of the *TotalSegmentator* plugin for Horos. We are validating the integration, refining the UI, and tuning the post-processing workflow. Expect frequent changes, unstable APIs, and partially implemented features.
+# TotalSegmentator OsiriX/Horos Plugin
 
 ---
 
