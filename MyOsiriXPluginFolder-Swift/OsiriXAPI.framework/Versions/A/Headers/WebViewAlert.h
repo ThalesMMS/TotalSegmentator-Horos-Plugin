@@ -1,0 +1,42 @@
+/*=========================================================================
+ Program:   OsiriX
+ Copyright (c) 2010 - 2025 Pixmeo SARL
+ 266 rue de Bernex
+ CH-1233 Bernex
+ Switzerland
+ All rights reserved.
+ =========================================================================*/
+
+#import <Cocoa/Cocoa.h>
+#import <WebKit/WebKit.h>
+
+@interface WebViewAlert : NSWindowController <WKNavigationDelegate>
+{
+    BOOL displayCancel, displayEnterRegKey, showDontShowAgain, dontShowAgain;
+    NSURL *url;
+    NSString *signature, *authorization;
+    int modalResponse;
+    IBOutlet WKWebView *webView;
+    unsigned long crc32result;
+    NSMutableDictionary *preferences;
+    NSTimer *quitAfterInterval;
+    IBOutlet NSButton *okButton;
+}
+
++ (NSInteger) alertWithURL: (NSURL*) u;
++ (NSInteger) alertWithURL: (NSURL*) u quitTimer: (BOOL) quitTimer;
+
++ (NSInteger) alertWithDictionary: (NSDictionary*) d;
++ (NSInteger) alertWithDictionary: (NSDictionary*) u quitTimer: (BOOL) quitTimer;
+
+- (id) initWithDictionary: (NSDictionary*) d;
+
+@property (readonly) int modalResponse;
+@property BOOL displayCancel, displayEnterRegKey, showDontShowAgain, dontShowAgain, doNotShow;
+@property (retain) NSURL *url;
+@property (retain) NSString *signature, *authorization;
+@property (retain) NSMutableDictionary *preferences;
+@property (retain) NSTimer *quitAfterInterval;
+@property (retain) NSDictionary *parameters;
+
+@end

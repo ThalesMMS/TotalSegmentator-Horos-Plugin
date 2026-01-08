@@ -1,0 +1,23 @@
+/*=========================================================================
+ Program:   OsiriX
+ Copyright (c) 2010 - 2025 Pixmeo SARL
+ 266 rue de Bernex
+ CH-1233 Bernex
+ Switzerland
+ All rights reserved.
+ =========================================================================*/
+
+
+
+
+#import <Foundation/Foundation.h>
+#import <Cocoa/Cocoa.h>
+
+
+/** \brief Full Screen Window */
+@interface NSFullScreenWindow : NSWindow {
+
+}
+- (BOOL)canBecomeKeyWindow;
+
+@end
