@@ -68,6 +68,8 @@ final class RunSegmentationWindowController: NSWindowController, NSTextFieldDele
 
     override func windowDidLoad() {
         super.windowDidLoad()
+        // Force light appearance for consistent look
+        window?.appearance = NSAppearance(named: .aqua)
         window?.delegate = self
         outputPathField?.delegate = self
         launchButton?.isEnabled = true
@@ -75,7 +77,18 @@ final class RunSegmentationWindowController: NSWindowController, NSTextFieldDele
         if outputPathField?.stringValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true {
             outputPathField?.stringValue = fallbackOutputPath
         }
+        // Force label colors to be readable on light background
+        fixLabelColors()
         applyConfiguration()
+    }
+
+    private func fixLabelColors() {
+        guard let contentView = window?.contentView else { return }
+        for subview in contentView.subviews {
+            if let textField = subview as? NSTextField, !textField.isEditable {
+                textField.textColor = NSColor.black
+            }
+        }
     }
 
     func windowDidBecomeKey(_ notification: Notification) {

@@ -34,8 +34,6 @@ class TotalSegmentatorHorosPlugin: PluginFilter {
         case toolbarAction = "TotalSegmentator"  // Toolbar button uses this name
     }
 
-    private static let toolbarIdentifier = "TotalSegmentatorToolbarItem"
-
     let preferences = SegmentationPreferences()
     var progressWindowController: SegmentationProgressWindowController?
     var setupProgressWindowController: SegmentationProgressWindowController?
@@ -101,6 +99,8 @@ class TotalSegmentatorHorosPlugin: PluginFilter {
     override func initPlugin() {
         let bundle = Bundle(for: type(of: self))
         bundle.loadNibNamed("Settings", owner: self, topLevelObjects: nil)
+        // Force light appearance for consistent look
+        settingsWindow?.appearance = NSAppearance(named: .aqua)
         settingsWindow?.delegate = self
         configureSettingsInterfaceIfNeeded()
 
@@ -116,36 +116,5 @@ class TotalSegmentatorHorosPlugin: PluginFilter {
 
     override func isCertifiedForMedicalImaging() -> Bool {
         return true
-    }
-
-    // MARK: - Toolbar Support (for roiTool plugin type)
-
-    override func toolbarAllowedIdentifiers(forViewer controller: Any!) -> [Any]! {
-        return [Self.toolbarIdentifier]
-    }
-
-    override func toolbarItem(forItemIdentifier identifier: String!, forViewer controller: Any!) -> NSToolbarItem! {
-        guard identifier == Self.toolbarIdentifier else { return nil }
-
-        let item = NSToolbarItem(itemIdentifier: NSToolbarItem.Identifier(identifier))
-        item.label = "TotalSegmentator"
-        item.paletteLabel = "TotalSegmentator"
-        item.toolTip = "Run TotalSegmentator segmentation"
-        item.target = self
-        item.action = #selector(toolbarButtonClicked(_:))
-
-        // Load icon from bundle
-        let bundle = Bundle(for: type(of: self))
-        if let iconPath = bundle.path(forResource: "TotalSegmentatorToolbar", ofType: "png"),
-           let image = NSImage(contentsOfFile: iconPath) {
-            image.size = NSSize(width: 32, height: 32)
-            item.image = image
-        }
-
-        return item
-    }
-
-    @objc private func toolbarButtonClicked(_ sender: Any?) {
-        _ = filterImage("TotalSegmentator")
     }
 }

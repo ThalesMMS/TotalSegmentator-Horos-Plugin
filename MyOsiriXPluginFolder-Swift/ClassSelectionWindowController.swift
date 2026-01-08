@@ -41,6 +41,8 @@ final class ClassSelectionWindowController: NSWindowController, NSTableViewDataS
         )
         window.title = NSLocalizedString("Select Classes", comment: "Title of the class selection sheet")
         window.isReleasedWhenClosed = false
+        // Force light appearance for consistent look
+        window.appearance = NSAppearance(named: .aqua)
 
         super.init(window: window)
         configureContent()

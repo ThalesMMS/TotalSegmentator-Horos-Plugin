@@ -31,6 +31,7 @@
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <textFieldCell key="cell" controlSize="small" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Task:" id="bCw-MI-dQ6">
                             <font key="font" metaFont="system" size="13"/>
+                            <color key="textColor" name="labelColor" catalog="System"/>
                         </textFieldCell>
                     </textField>
                     <popUpButton verticalHuggingPriority="251" id="jTp-n9-g5S">
@@ -50,6 +51,7 @@
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <textFieldCell key="cell" controlSize="small" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Device:" id="rCg-z3-ixv">
                             <font key="font" metaFont="system" size="13"/>
+                            <color key="textColor" name="labelColor" catalog="System"/>
                         </textFieldCell>
                     </textField>
                     <popUpButton verticalHuggingPriority="251" id="jXf-e9-Q9h">
@@ -76,6 +78,7 @@
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <textFieldCell key="cell" controlSize="small" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Classes:" id="VJd-YI-9j2">
                             <font key="font" metaFont="system" size="13"/>
+                            <color key="textColor" name="labelColor" catalog="System"/>
                         </textFieldCell>
                     </textField>
                     <textField id="g28-vZ-pow">
@@ -90,6 +93,7 @@
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <textFieldCell key="cell" controlSize="small" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="License:" id="nXa-xW-7u6">
                             <font key="font" metaFont="system" size="13"/>
+                            <color key="textColor" name="labelColor" catalog="System"/>
                         </textFieldCell>
                     </textField>
                     <textField id="S4L-MA-fjX">
@@ -106,6 +110,7 @@
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <textFieldCell key="cell" controlSize="small" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Output folder:" id="r2D-8m-npl">
                             <font key="font" metaFont="system" size="13"/>
+                            <color key="textColor" name="labelColor" catalog="System"/>
                         </textFieldCell>
                     </textField>
                     <textField id="lQ7-4Z-HvA">

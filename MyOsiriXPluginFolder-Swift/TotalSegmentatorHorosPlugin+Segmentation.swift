@@ -338,7 +338,7 @@ extension TotalSegmentatorHorosPlugin {
                 if importResult.rtStructPaths.isEmpty {
                     successMessage = "Segmentation finished successfully."
                 } else {
-                    successMessage = "Segmentation finished successfully. Generated ROIs are now available in Horos."
+                    successMessage = "Segmentation finished successfully. Generated ROIs are now available."
                 }
                 self.presentAlert(title: "TotalSegmentator", message: successMessage)
             case .failure(let error):

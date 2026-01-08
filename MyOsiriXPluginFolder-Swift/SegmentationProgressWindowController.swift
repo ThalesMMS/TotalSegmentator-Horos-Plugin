@@ -71,7 +71,11 @@ final class SegmentationProgressWindowController: NSWindowController {
         performOnMain { controller in
             guard let textStorage = controller.textView.textStorage else { return }
             let normalized = message.hasSuffix("\n") ? message : message + "\n"
-            let attributed = NSAttributedString(string: normalized)
+            let attributes: [NSAttributedString.Key: Any] = [
+                .foregroundColor: NSColor.labelColor,
+                .font: NSFont.monospacedSystemFont(ofSize: 12, weight: .regular)
+            ]
+            let attributed = NSAttributedString(string: normalized, attributes: attributes)
             textStorage.append(attributed)
             controller.textView.scrollToEndOfDocument(nil)
         }
@@ -141,6 +145,8 @@ final class SegmentationProgressWindowController: NSWindowController {
             )
             window.title = "TotalSegmentator Progress"
             window.isReleasedWhenClosed = false
+            // Force light appearance for consistent look
+            window.appearance = NSAppearance(named: .aqua)
             self.window = window
         }
 
