@@ -1,0 +1,423 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 55;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		CEC0F6EB28BF45CD003DD38F /* Horos.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CEC0F6E928BF45CD003DD38F /* Horos.framework */; };
+		CEC0F6EE28BF49EB003DD38F /* Settings.xib in Resources */ = {isa = PBXBuildFile; fileRef = CEC0F6EC28BF49EB003DD38F /* Settings.xib */; };
+		CEC0F6F228BF8DF5003DD38F /* Plugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEC0F6F128BF8DF5003DD38F /* Plugin.swift */; };
+		1C92A5A122B140E9AD3082CE /* TotalSegmentatorPluginTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BD7F7EB85BC4BE18C812E24 /* TotalSegmentatorPluginTypes.swift */; };
+		51560D95A0BF4BCDA8FECC6E /* TotalSegmentatorHorosPlugin+Utilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB2DB2A009814376A6F2D078 /* TotalSegmentatorHorosPlugin+Utilities.swift */; };
+		F810433067F346A8A870481D /* TotalSegmentatorHorosPlugin+Settings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CE023C3E8BF46EAA4AB2CE0 /* TotalSegmentatorHorosPlugin+Settings.swift */; };
+		BF80B133459B4191B81D5DA4 /* TotalSegmentatorHorosPlugin+ClassSelection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75C420ECD0964634AC5B2900 /* TotalSegmentatorHorosPlugin+ClassSelection.swift */; };
+		7DBA858C63E74C179E1D9D26 /* TotalSegmentatorHorosPlugin+Environment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14FCAED9309F49B3ACE85E87 /* TotalSegmentatorHorosPlugin+Environment.swift */; };
+		ACC55244220940DBB01C0FE9 /* TotalSegmentatorHorosPlugin+Segmentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F46AB8ACA0F4252A8445636 /* TotalSegmentatorHorosPlugin+Segmentation.swift */; };
+		6C6A5CCDA34A41929D82BA54 /* TotalSegmentatorHorosPlugin+Scripts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34D8FEB9C2F04D0FA81C9F39 /* TotalSegmentatorHorosPlugin+Scripts.swift */; };
+		E599F0D4647E410E92F71AF6 /* TotalSegmentatorHorosPlugin+Export.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE021AE8113A4DFBA7F52017 /* TotalSegmentatorHorosPlugin+Export.swift */; };
+		0B69ABEE2ECA4E249A51951B /* TotalSegmentatorHorosPlugin+Import.swift in Sources */ = {isa = PBXBuildFile; fileRef = 935DF9D48BF648B9BFEB2E0A /* TotalSegmentatorHorosPlugin+Import.swift */; };
+		33C9A7B7A22E46E2B69181DF /* TotalSegmentatorHorosPlugin+Audit.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E72E1931C3448F49CCB9C16 /* TotalSegmentatorHorosPlugin+Audit.swift */; };
+		3C35DA86F7204A5D90C51396 /* TotalSegmentatorHorosPlugin+Preferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9AA3040C7F54F17955E2608 /* TotalSegmentatorHorosPlugin+Preferences.swift */; };
+		D2D8D2032AF5A00100AAA111 /* RunSegmentationWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = D2D8D2042AF5A00100AAA111 /* RunSegmentationWindowController.xib */; };
+		D2D8D2052AF5A00100AAA111 /* RunSegmentationWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2D8D2022AF5A00100AAA111 /* RunSegmentationWindowController.swift */; };
+		D2D8D2062AF5A9D200AAA111 /* TotalSegmentatorToolbar.png in Resources */ = {isa = PBXBuildFile; fileRef = D2D8D2072AF5A9D200AAA111 /* TotalSegmentatorToolbar.png */; };
+		D2D8D2092AF5B3B400AAA111 /* ClassSelectionWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2D8D2082AF5B3B400AAA111 /* ClassSelectionWindowController.swift */; };
+		D2D8D20B2AF5B3CF00AAA111 /* SegmentationProgressWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2D8D20A2AF5B3CF00AAA111 /* SegmentationProgressWindowController.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		CEC0F6E028BF4354003DD38F /* TotalSegmentatorHorosPlugin.osirixplugin */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TotalSegmentatorHorosPlugin.osirixplugin; sourceTree = BUILT_PRODUCTS_DIR; };
+		CEC0F6E928BF45CD003DD38F /* Horos.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = Horos.framework; sourceTree = "<group>"; };
+		CEC0F6EC28BF49EB003DD38F /* Settings.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = Settings.xib; sourceTree = "<group>"; };
+		CEC0F6F028BF8DF4003DD38F /* TotalSegmentatorHorosPlugin-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "TotalSegmentatorHorosPlugin-Bridging-Header.h"; sourceTree = "<group>"; };
+		CEC0F6F128BF8DF5003DD38F /* Plugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Plugin.swift; sourceTree = "<group>"; };
+		8BD7F7EB85BC4BE18C812E24 /* TotalSegmentatorPluginTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TotalSegmentatorPluginTypes.swift; sourceTree = "<group>"; };
+		BB2DB2A009814376A6F2D078 /* TotalSegmentatorHorosPlugin+Utilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TotalSegmentatorHorosPlugin+Utilities.swift"; sourceTree = "<group>"; };
+		9CE023C3E8BF46EAA4AB2CE0 /* TotalSegmentatorHorosPlugin+Settings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TotalSegmentatorHorosPlugin+Settings.swift"; sourceTree = "<group>"; };
+		75C420ECD0964634AC5B2900 /* TotalSegmentatorHorosPlugin+ClassSelection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TotalSegmentatorHorosPlugin+ClassSelection.swift"; sourceTree = "<group>"; };
+		14FCAED9309F49B3ACE85E87 /* TotalSegmentatorHorosPlugin+Environment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TotalSegmentatorHorosPlugin+Environment.swift"; sourceTree = "<group>"; };
+		8F46AB8ACA0F4252A8445636 /* TotalSegmentatorHorosPlugin+Segmentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TotalSegmentatorHorosPlugin+Segmentation.swift"; sourceTree = "<group>"; };
+		34D8FEB9C2F04D0FA81C9F39 /* TotalSegmentatorHorosPlugin+Scripts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TotalSegmentatorHorosPlugin+Scripts.swift"; sourceTree = "<group>"; };
+		EE021AE8113A4DFBA7F52017 /* TotalSegmentatorHorosPlugin+Export.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TotalSegmentatorHorosPlugin+Export.swift"; sourceTree = "<group>"; };
+		935DF9D48BF648B9BFEB2E0A /* TotalSegmentatorHorosPlugin+Import.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TotalSegmentatorHorosPlugin+Import.swift"; sourceTree = "<group>"; };
+		4E72E1931C3448F49CCB9C16 /* TotalSegmentatorHorosPlugin+Audit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TotalSegmentatorHorosPlugin+Audit.swift"; sourceTree = "<group>"; };
+		B9AA3040C7F54F17955E2608 /* TotalSegmentatorHorosPlugin+Preferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TotalSegmentatorHorosPlugin+Preferences.swift"; sourceTree = "<group>"; };
+		D2D8D2022AF5A00100AAA111 /* RunSegmentationWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunSegmentationWindowController.swift; sourceTree = "<group>"; };
+		D2D8D2042AF5A00100AAA111 /* RunSegmentationWindowController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = RunSegmentationWindowController.xib; sourceTree = "<group>"; };
+		D2D8D2072AF5A9D200AAA111 /* TotalSegmentatorToolbar.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = TotalSegmentatorToolbar.png; sourceTree = "<group>"; };
+		D2D8D2082AF5B3B400AAA111 /* ClassSelectionWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClassSelectionWindowController.swift; sourceTree = "<group>"; };
+		D2D8D20A2AF5B3CF00AAA111 /* SegmentationProgressWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SegmentationProgressWindowController.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		CEC0F6DD28BF4354003DD38F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CEC0F6EB28BF45CD003DD38F /* Horos.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		CEC0F6D728BF4354003DD38F = {
+			isa = PBXGroup;
+			children = (
+				CEC0F6E928BF45CD003DD38F /* Horos.framework */,
+				CEC0F6F128BF8DF5003DD38F /* Plugin.swift */,
+				8BD7F7EB85BC4BE18C812E24 /* TotalSegmentatorPluginTypes.swift */,
+				BB2DB2A009814376A6F2D078 /* TotalSegmentatorHorosPlugin+Utilities.swift */,
+				9CE023C3E8BF46EAA4AB2CE0 /* TotalSegmentatorHorosPlugin+Settings.swift */,
+				75C420ECD0964634AC5B2900 /* TotalSegmentatorHorosPlugin+ClassSelection.swift */,
+				14FCAED9309F49B3ACE85E87 /* TotalSegmentatorHorosPlugin+Environment.swift */,
+				8F46AB8ACA0F4252A8445636 /* TotalSegmentatorHorosPlugin+Segmentation.swift */,
+				34D8FEB9C2F04D0FA81C9F39 /* TotalSegmentatorHorosPlugin+Scripts.swift */,
+				EE021AE8113A4DFBA7F52017 /* TotalSegmentatorHorosPlugin+Export.swift */,
+				935DF9D48BF648B9BFEB2E0A /* TotalSegmentatorHorosPlugin+Import.swift */,
+				4E72E1931C3448F49CCB9C16 /* TotalSegmentatorHorosPlugin+Audit.swift */,
+				B9AA3040C7F54F17955E2608 /* TotalSegmentatorHorosPlugin+Preferences.swift */,
+				D2D8D2022AF5A00100AAA111 /* RunSegmentationWindowController.swift */,
+				D2D8D2082AF5B3B400AAA111 /* ClassSelectionWindowController.swift */,
+				D2D8D20A2AF5B3CF00AAA111 /* SegmentationProgressWindowController.swift */,
+				CEC0F6EC28BF49EB003DD38F /* Settings.xib */,
+				D2D8D2042AF5A00100AAA111 /* RunSegmentationWindowController.xib */,
+				D2D8D2072AF5A9D200AAA111 /* TotalSegmentatorToolbar.png */,
+				CEC0F6E128BF4354003DD38F /* Products */,
+				CEC0F6F028BF8DF4003DD38F /* TotalSegmentatorHorosPlugin-Bridging-Header.h */,
+			);
+			sourceTree = "<group>";
+		};
+		CEC0F6E128BF4354003DD38F /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				CEC0F6E028BF4354003DD38F /* TotalSegmentatorHorosPlugin.osirixplugin */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		CEC0F6DF28BF4354003DD38F /* TotalSegmentatorHorosPlugin */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CEC0F6E428BF4354003DD38F /* Build configuration list for PBXNativeTarget "TotalSegmentatorHorosPlugin" */;
+			buildPhases = (
+				CEC0F6DC28BF4354003DD38F /* Sources */,
+				CEC0F6DD28BF4354003DD38F /* Frameworks */,
+				CEC0F6DE28BF4354003DD38F /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = TotalSegmentatorHorosPlugin;
+			productName = TotalSegmentatorHorosPlugin;
+			productReference = CEC0F6E028BF4354003DD38F /* TotalSegmentatorHorosPlugin.osirixplugin */;
+			productType = "com.apple.product-type.bundle";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		CEC0F6D828BF4354003DD38F /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastUpgradeCheck = 2600;
+				TargetAttributes = {
+					CEC0F6DF28BF4354003DD38F = {
+						CreatedOnToolsVersion = 13.4.1;
+						LastSwiftMigration = 1340;
+					};
+				};
+			};
+			buildConfigurationList = CEC0F6DB28BF4354003DD38F /* Build configuration list for PBXProject "TotalSegmentatorHorosPlugin" */;
+			compatibilityVersion = "Xcode 13.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = CEC0F6D728BF4354003DD38F;
+			productRefGroup = CEC0F6E128BF4354003DD38F /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				CEC0F6DF28BF4354003DD38F /* TotalSegmentatorHorosPlugin */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		CEC0F6DE28BF4354003DD38F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D2D8D2032AF5A00100AAA111 /* RunSegmentationWindowController.xib in Resources */,
+				CEC0F6EE28BF49EB003DD38F /* Settings.xib in Resources */,
+				D2D8D2062AF5A9D200AAA111 /* TotalSegmentatorToolbar.png in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		CEC0F6DC28BF4354003DD38F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D2D8D2092AF5B3B400AAA111 /* ClassSelectionWindowController.swift in Sources */,
+				D2D8D20B2AF5B3CF00AAA111 /* SegmentationProgressWindowController.swift in Sources */,
+				D2D8D2052AF5A00100AAA111 /* RunSegmentationWindowController.swift in Sources */,
+				CEC0F6F228BF8DF5003DD38F /* Plugin.swift in Sources */,
+				1C92A5A122B140E9AD3082CE /* TotalSegmentatorPluginTypes.swift in Sources */,
+				51560D95A0BF4BCDA8FECC6E /* TotalSegmentatorHorosPlugin+Utilities.swift in Sources */,
+				F810433067F346A8A870481D /* TotalSegmentatorHorosPlugin+Settings.swift in Sources */,
+				BF80B133459B4191B81D5DA4 /* TotalSegmentatorHorosPlugin+ClassSelection.swift in Sources */,
+				7DBA858C63E74C179E1D9D26 /* TotalSegmentatorHorosPlugin+Environment.swift in Sources */,
+				ACC55244220940DBB01C0FE9 /* TotalSegmentatorHorosPlugin+Segmentation.swift in Sources */,
+				6C6A5CCDA34A41929D82BA54 /* TotalSegmentatorHorosPlugin+Scripts.swift in Sources */,
+				E599F0D4647E410E92F71AF6 /* TotalSegmentatorHorosPlugin+Export.swift in Sources */,
+				0B69ABEE2ECA4E249A51951B /* TotalSegmentatorHorosPlugin+Import.swift in Sources */,
+				33C9A7B7A22E46E2B69181DF /* TotalSegmentatorHorosPlugin+Audit.swift in Sources */,
+				3C35DA86F7204A5D90C51396 /* TotalSegmentatorHorosPlugin+Preferences.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		CEC0F6E228BF4354003DD38F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = H4Q6WN7NV5;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+			};
+			name = Debug;
+		};
+		CEC0F6E328BF4354003DD38F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = H4Q6WN7NV5;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = Release;
+		};
+		CEC0F6E528BF4354003DD38F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = P4VGX44GD8;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 11.0;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSPrincipalClass = TotalSegmentatorHorosPlugin;
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Bundles";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = (
+					"-undefined",
+					dynamic_lookup,
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.totalsegmentator.thalesmms;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "TotalSegmentatorHorosPlugin-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				WRAPPER_EXTENSION = osirixplugin;
+			};
+			name = Debug;
+		};
+		CEC0F6E628BF4354003DD38F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = P4VGX44GD8;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 11.0;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSPrincipalClass = TotalSegmentatorHorosPlugin;
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Bundles";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = (
+					"-undefined",
+					dynamic_lookup,
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.totalsegmentator.thalesmms;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "TotalSegmentatorHorosPlugin-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
+				WRAPPER_EXTENSION = osirixplugin;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		CEC0F6DB28BF4354003DD38F /* Build configuration list for PBXProject "TotalSegmentatorHorosPlugin" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CEC0F6E228BF4354003DD38F /* Debug */,
+				CEC0F6E328BF4354003DD38F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		CEC0F6E428BF4354003DD38F /* Build configuration list for PBXNativeTarget "TotalSegmentatorHorosPlugin" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CEC0F6E528BF4354003DD38F /* Debug */,
+				CEC0F6E628BF4354003DD38F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = CEC0F6D828BF4354003DD38F /* Project object */;
+}

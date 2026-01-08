@@ -10,17 +10,33 @@
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundlePackageType</key>
 	<string>BNDL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>1.0</string>
+	<key>CFBundleVersion</key>
+	<string>1.0</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>MenuTitles</key>
 	<array>
-		<string>Run TotalSegmentator</string>
-		<string>TotalSegmentator Settings</string>
+		<string>TotalSegmentator</string>
 	</array>
 	<key>NSPrincipalClass</key>
 	<string>TotalSegmentatorHorosPlugin</string>
+	<key>ToolbarIcon</key>
+	<string>TotalSegmentatorToolbar.png</string>
+	<key>ToolbarNames</key>
+	<array>
+		<string>TotalSegmentator</string>
+	</array>
+	<key>allowToolbarIcon</key>
+	<string>YES</string>
+	<key>modalities</key>
+	<array>
+		<string>MR</string>
+		<string>CT</string>
+	</array>
 	<key>pluginType</key>
-	<string>imageFilter</string>
+	<string>roiTool</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>11.0</string>
 	<key>MACOSX_DEPLOYMENT_TARGET</key>
