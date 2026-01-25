@@ -745,7 +745,7 @@ def nnUNet_predict_image(file_in: Union[str, Path, Nifti1Image], file_out, task_
 
             if output_type == "dicom":
                 file_out.mkdir(exist_ok=True, parents=True)
-                save_mask_as_rtstruct(img_data, selected_classes, file_in_dcm, file_out / "segmentations.dcm")
+                save_mask_as_rtstruct(img_out, selected_classes, file_in_dcm, file_out / "segmentations.dcm")
             else:
                 st = time.time()
                 if multilabel_image:

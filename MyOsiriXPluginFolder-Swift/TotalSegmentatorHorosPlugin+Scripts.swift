@@ -148,8 +148,8 @@ def gather_binary_masks(base):
 def build_multilabel_from_masks(paths):
     if not paths:
         return None
-    first = nib.load(str(paths[0]))
-    data = np.zeros(first.shape, dtype=np.uint16)
+    first_img = nib.load(str(paths[0]))
+    data = np.zeros(first_img.shape, dtype=np.uint16)
     mapping = {}
     index = 1
     for path in paths:
@@ -161,26 +161,30 @@ def build_multilabel_from_masks(paths):
             index += 1
     if not mapping:
         return None
-    return data, mapping
+    new_header = first_img.header.copy()
+    new_header.set_data_dtype(np.uint16)
+    nifti_img = nib.Nifti1Image(data.astype(np.uint16), first_img.affine, new_header)
+    return nifti_img, mapping
 
 
 def load_segmentation(base, task_name):
     multi = find_multilabel_file(base)
     if multi:
+        img = nib.load(str(multi))
+        data = img.get_fdata().astype(np.uint16)
         try:
-            img, label_map = load_multilabel_nifti(multi)
-            data = img.get_fdata().astype(np.uint16)
+            _, label_map = load_multilabel_nifti(img)
             mapping = {int(k): str(v) for k, v in label_map.items()}
-            return data, mapping
         except Exception:
-            img = nib.load(str(multi))
-            data = img.get_fdata().astype(np.uint16)
             if task_name and task_name in class_map:
                 mapping = {int(k): str(v) for k, v in class_map[task_name].items()}
             else:
                 labels = [int(v) for v in np.unique(data) if int(v) != 0]
                 mapping = {label: "Label_{}".format(label) for label in labels}
-            return data, mapping
+        header = img.header.copy()
+        header.set_data_dtype(np.uint16)
+        nifti_img = nib.Nifti1Image(data.astype(np.uint16), img.affine, header)
+        return nifti_img, mapping
 
     mask_result = build_multilabel_from_masks(gather_binary_masks(base))
     if mask_result:
@@ -189,15 +193,16 @@ def load_segmentation(base, task_name):
     raise RuntimeError("No NIfTI segmentations were found for conversion.")
 
 
-def filter_selection(data, mapping, selected):
+def filter_selection(segmentation_img, mapping, selected):
     if not selected:
-        return data, mapping
+        return segmentation_img, mapping
 
     selected_indices = [idx for idx, name in mapping.items() if normalize_name(name) in selected]
     if not selected_indices:
-        return data, mapping
+        return segmentation_img, mapping
 
     selected_indices.sort()
+    data = segmentation_img.get_fdata().astype(np.uint16)
     new_data = np.zeros_like(data, dtype=np.uint16)
     new_mapping = {}
     next_index = 1
@@ -206,7 +211,10 @@ def filter_selection(data, mapping, selected):
         new_mapping[next_index] = mapping[idx]
         next_index += 1
 
-    return new_data, new_mapping
+    header = segmentation_img.header.copy()
+    header.set_data_dtype(np.uint16)
+    filtered_img = nib.Nifti1Image(new_data.astype(np.uint16), segmentation_img.affine, header)
+    return filtered_img, new_mapping
 
 
 def main():
@@ -225,18 +233,18 @@ def main():
     selected = {normalize_name(name) for name in config.get("selected_classes", []) if isinstance(name, str)}
     task_name = config.get("task")
 
-    data, mapping = load_segmentation(nifti_dir, task_name)
-    if data.size == 0 or not mapping:
+    segmentation_img, mapping = load_segmentation(nifti_dir, task_name)
+    if not mapping:
         raise RuntimeError("No segmentation labels available for conversion.")
 
-    data, mapping = filter_selection(data, mapping, selected)
-    if data.size == 0 or not mapping:
+    segmentation_img, mapping = filter_selection(segmentation_img, mapping, selected)
+    if not mapping:
         raise RuntimeError("No segmentation labels remain after applying the class filter.")
 
     rtstruct_name = config.get("rtstruct_name", "segmentations_rtstruct.dcm")
     rtstruct_path = output_dir / rtstruct_name
 
-    save_mask_as_rtstruct(data, mapping, str(reference_dir), str(rtstruct_path))
+    save_mask_as_rtstruct(segmentation_img, mapping, str(reference_dir), str(rtstruct_path))
 
     result = {
         "rtstruct_paths": [str(rtstruct_path)],

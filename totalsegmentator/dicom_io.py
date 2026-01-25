@@ -24,6 +24,12 @@ import nibabel as nib
 import dicom2nifti
 
 from totalsegmentator.config import get_weights_dir
+from nibabel.orientations import (
+    axcodes2ornt,
+    io_orientation,
+    ornt_transform,
+    apply_orientation,
+)
 
 
 
@@ -144,29 +150,44 @@ def dcm_to_nifti(input_path, output_path, tmp_dir=None, verbose=False):
     dicom2nifti.dicom_series_to_nifti(input_path, output_path, reorient_nifti=True)
 
 
-def save_mask_as_rtstruct(img_data, selected_classes, dcm_reference_file, output_path):
-    """
-    dcm_reference_file: a directory with dcm slices ??
-    """
+def _reorient_to_lps(segmentation_img):
+    """Return segmentation data aligned to LPS axis codes."""
+
+    current_ornt = io_orientation(segmentation_img.affine)
+    target_ornt = axcodes2ornt(("L", "P", "S"))
+    transform = ornt_transform(current_ornt, target_ornt)
+    data = segmentation_img.get_fdata()
+    if data.ndim != 3:
+        raise ValueError("Segmentation image must be 3D to convert to RT Struct.")
+    reoriented = apply_orientation(data, transform)
+    return np.asarray(reoriented)
+
+
+def save_mask_as_rtstruct(segmentation_img, selected_classes, dcm_reference_file, output_path):
+    """Create a volumetric RT Struct from a NIfTI segmentation volume."""
+
+    if not isinstance(segmentation_img, nib.Nifti1Image):
+        raise TypeError("segmentation_img must be a nibabel.Nifti1Image instance")
+
     from rt_utils import RTStructBuilder
     import logging
+
     logging.basicConfig(level=logging.WARNING)  # avoid messages from rt_utils
 
-    # create new RT Struct - requires original DICOM
+    # Align segmentation to LPS (DICOM) orientation and reorder axes: (Slices, Rows, Columns)
+    lps_volume = _reorient_to_lps(segmentation_img)
+    slices_first = np.transpose(lps_volume, (2, 1, 0))
+
     rtstruct = RTStructBuilder.create_new(dicom_series_path=dcm_reference_file)
 
-    # add mask to RT Struct
     for class_idx, class_name in tqdm(selected_classes.items()):
-        binary_img = img_data == class_idx
-        if binary_img.sum() > 0:  # only save none-empty images
+        mask = slices_first == class_idx
+        if not np.any(mask):
+            continue
 
-            # rotate nii to match DICOM orientation
-            binary_img = np.rot90(binary_img, 1, (0, 1))  # rotate segmentation in-plane
-
-            # add segmentation to RT Struct
-            rtstruct.add_roi(
-                mask=binary_img,  # has to be a binary numpy array
-                name=class_name
-            )
+        rtstruct.add_roi(
+            mask=np.ascontiguousarray(mask.astype(np.uint8)),
+            name=class_name,
+        )
 
     rtstruct.save(str(output_path))
